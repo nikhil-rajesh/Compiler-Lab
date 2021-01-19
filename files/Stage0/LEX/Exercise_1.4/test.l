@@ -4,11 +4,12 @@
 	#include <stdio.h>
         int word = 0;
 %}
+comment (\/\/.*\n)|(\/\*(.|\n)*\*\/)
 
 %%
 
-[A].{2}[ |.] {printf("%s\n", yytext);}
-.|[\n] {} /*Ignore rest of the spaces*/
+{comment} {printf("%s\n", yytext);}
+.|\n {}
 
 %%
 
