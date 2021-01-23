@@ -1,2 +1,4 @@
 **/lex.yy.c
 **/*.out
+**/y.tab.c
+**/y.tab.h
