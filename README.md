@@ -3,8 +3,8 @@ This is my implementation of an experimental compiler that I made using the docu
 This was done as part of a Compiler Lab course I took up in my 6th Semester at NITC.
 
 ## Progress
-- [ ] Stage 0
-- [ ] Stage 1
+- [x] Stage 0
+- [x] Stage 1
 - [ ] Stage 2
 - [ ] Stage 3
 - [ ] Stage 4
