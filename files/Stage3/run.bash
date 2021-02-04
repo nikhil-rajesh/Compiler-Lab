@@ -5,8 +5,9 @@ CURR_DIR="files/Stage3"
 wd=`pwd`
 
 make > /dev/null 2>&1
-./a.out test.txt
+./expl-bin $1
+./ltranslate
 cd $PROJ_DIR
-./xsm -e $CURR_DIR/intermediate.xsm -l $CURR_DIR/library.lib
+./xsm -e $CURR_DIR/machinecode.xsm -l $CURR_DIR/library.lib
 cd $wd
 make clean > /dev/null

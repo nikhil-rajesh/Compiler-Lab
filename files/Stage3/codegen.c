@@ -1,6 +1,9 @@
-int counter = -1, i, j;
+int counter = -1, i, j, label=0;
 extern FILE *intermediate;
 
+int getlabel() {
+    return ++label;
+}
 int getReg() {
     if(counter < 20)
         return ++counter;
@@ -12,13 +15,14 @@ int freeReg() {
         counter--;
 }
 int codegen(struct tnode* t) {
-    int r1, r2, r3, number, status=0;
+    int r1, r2, r3, l1, l2, number, status=0;
 
     if(t == NULL) {
         return -1;
     } else if(t->nodetype == NODE_CONNECTOR) {
         codegen(t->left);
         codegen(t->right);
+        return -1;
     }
 
     switch(t->nodetype) {
@@ -53,6 +57,42 @@ int codegen(struct tnode* t) {
             r1 = codegen(t->left);
             r2 = codegen(t->right);
             fprintf(intermediate, "DIV R%d, R%d\n", r1, r2);
+            freeReg();
+            return r1;
+        case NODE_LT:
+            r1 = codegen(t->left);
+            r2 = codegen(t->right);
+            fprintf(intermediate, "LT R%d, R%d\n", r1, r2);
+            freeReg();
+            return r1;
+        case NODE_GT:
+            r1 = codegen(t->left);
+            r2 = codegen(t->right);
+            fprintf(intermediate, "GT R%d, R%d\n", r1, r2);
+            freeReg();
+            return r1;
+        case NODE_LE:
+            r1 = codegen(t->left);
+            r2 = codegen(t->right);
+            fprintf(intermediate, "LE R%d, R%d\n", r1, r2);
+            freeReg();
+            return r1;
+        case NODE_GE:
+            r1 = codegen(t->left);
+            r2 = codegen(t->right);
+            fprintf(intermediate, "GE R%d, R%d\n", r1, r2);
+            freeReg();
+            return r1;
+        case NODE_EQ:
+            r1 = codegen(t->left);
+            r2 = codegen(t->right);
+            fprintf(intermediate, "EQ R%d, R%d\n", r1, r2);
+            freeReg();
+            return r1;
+        case NODE_NEQ:
+            r1 = codegen(t->left);
+            r2 = codegen(t->right);
+            fprintf(intermediate, "NE R%d, R%d\n", r1, r2);
             freeReg();
             return r1;
         case NODE_ASSGN:
@@ -101,6 +141,37 @@ int codegen(struct tnode* t) {
             for (i = status; i >= 0; i--)
                 fprintf(intermediate, "POP R%d\n", i);
             counter = status;
+            break;
+        case NODE_IF:
+            r1 = codegen(t->left); 
+            l1 = getlabel();
+            fprintf(intermediate, "JZ R%d,L%d\n", r1, l1);
+            number = codegen(t->right);
+            fprintf(intermediate, "L%d:\n", l1);
+            freeReg();
+            break;
+        case NODE_IF_ELSE:
+            r1 = codegen(t->left);
+            l1 = getlabel();
+            l2 = getlabel();
+            fprintf(intermediate, "JZ R%d,L%d\n", r1, l1);
+            freeReg();
+            number = codegen(t->middle);
+            fprintf(intermediate, "JMP L%d\n", l2);
+            fprintf(intermediate, "L%d:\n", l1);
+            number = codegen(t->right);
+            fprintf(intermediate, "L%d:\n", l2);
+            break;
+        case NODE_WHILE:
+            l1 = getlabel();
+            l2 = getlabel();
+            fprintf(intermediate, "L%d:\n", l1);
+            r1 = codegen(t->left);
+            fprintf(intermediate, "JZ R%d,L%d\n", r1, l2);
+            freeReg();
+            number = codegen(t->right);
+            fprintf(intermediate, "JMP L%d\n", l1);
+            fprintf(intermediate, "L%d:\n", l2);
             break;
     }
 }

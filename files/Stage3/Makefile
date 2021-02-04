@@ -18,7 +18,7 @@ lex.yy.c: exprtree.l
 	$(LEX) exprtree.l
 
 y.tab.c: exprtree.y
-	$(YACC) -d exprtree.y
+	$(YACC) -o y.tab.c -d exprtree.y
 
 ltranslate: ltranslate.o
 	$(CC) $(CFLAGS) -o ltranslate ltranslate.lex.o
@@ -30,4 +30,4 @@ ltranslate.lex.c: ltranslate.l
 	$(LEX) -o ltranslate.lex.c ltranslate.l
 
 clean: 
-	rm expl-bin ltranslate *.o lex.yy.c y.* ltranslate.lex.c machinecode.xsm *.dot *.png
+	$(RM) expl-bin ltranslate *.o lex.yy.c y.* ltranslate.lex.c machinecode.xsm

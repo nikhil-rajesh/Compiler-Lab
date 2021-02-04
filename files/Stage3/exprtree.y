@@ -35,10 +35,12 @@
 
 program: START Slist END ';'    {
                                     $$ = $3;
-                                    print_dot($2);
-                                    //initialize();
-                                    //codegen($2); 
-                                    //fclose(intermediate);
+                                    //print_dot($2);
+                                    initialize();
+                                    fprintf(intermediate, "MAIN:\n");
+                                    codegen($2); 
+                                    fprintf(intermediate, "RET\n");
+                                    fclose(intermediate);
                                 }
        | START END ';'          {$$ = $2;}
        ;
