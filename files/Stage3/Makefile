@@ -3,10 +3,10 @@ CFLAGS = -g -fcommon
 LEX = lex
 YACC = yacc
 
-default: expl-bin ltranslate
+default: expl-bin
 
-expl-bin: lex.yy.o y.tab.o
-	$(CC) $(CFLAGS) -o expl-bin lex.yy.o y.tab.o
+expl-bin: lex.yy.o
+	$(CC) $(CFLAGS) -o expl-bin lex.yy.o
 
 y.tab.o: y.tab.c y.tab.h exprtree.h exprtree.c initialize.c codegen.c typecheck.c
 	$(CC) $(CFLAGS) -w -c y.tab.c

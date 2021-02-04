@@ -22,13 +22,13 @@
 #define TYPE_INT 1
 #define TYPE_BOOL 2
 
-typedef struct tnode{
+struct tnode{
     int val; //value of the expression tree
     int type; //type of variable
     char* varname; //Name of variable for ID names
     int nodetype; //Information of non-leaf nodes. Ex NODE_PLUS
     struct tnode *left, *middle, *right; //left and right branches, middle for NODE_IF_ELSE
-}tnode;
+};
 	
 /*Create a node tnode*/
 struct tnode* createTree(int type, int val, int nodetype, char* name, struct tnode *l, struct tnode *r, struct tnode *mid);
