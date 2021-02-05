@@ -26,6 +26,8 @@
 "while"     {return WHILE;}
 "do"        {return DO;}
 "endwhile"  {return ENDWHILE;}
+"break"     {return BREAK;}
+"continue"  {return CONT;}
 "=="        {return EQ;}
 "!="        {return NEQ;}
 "<="        {return LE;}

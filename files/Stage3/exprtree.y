@@ -21,6 +21,7 @@
 
 %token START END READ WRITE PLUS MINUS MUL DIV ASSGN NUM ID
 %token IF THEN ELSE ENDIF WHILE DO ENDWHILE EQ NEQ LE GE LT GT
+%token BREAK CONT
 %left PLUS MINUS
 %left MUL DIV
 %right ASSGN
@@ -28,8 +29,9 @@
 %right EQ NEQ
 
 %type <nptr> NUM ID START END READ WRITE PLUS MINUS MUL DIV ASSGN
-%type <nptr> IF THEN ELSE ENDIF WHILE DO ENDWHILE EQ NEQ LE GE LT GT
+%type <nptr> IF THEN ELSE ENDIF WHILE DO ENDWHILE EQ NEQ LE GE LT GT BREAK CONT
 %type <nptr> program Slist Stmt InputStmt OutputStmt AsgStmt expr IfStmt WhileStmt
+%type <nptr> BrkStmt ContStmt 
 
 %%
 
@@ -54,6 +56,8 @@ Stmt: InputStmt         {$$ = $1;}
     | AsgStmt           {$$ = $1;}
     | IfStmt            {$$ = $1;}
     | WhileStmt         {$$ = $1;}
+    | BrkStmt           {$$ = $1;}
+    | ContStmt          {$$ = $1;}
     ;
 
 IfStmt: IF '(' expr ')' THEN Slist ELSE Slist ENDIF ';'     {
@@ -69,6 +73,9 @@ WhileStmt: WHILE '(' expr ')' DO Slist ENDWHILE ';'         {
                                                                 typecheck($3->type, TYPE_BOOL, 'w');
                                                                 $$ = createTree(TYPE_VOID, 0, NODE_WHILE, NULL, $3, $6, NULL);
                                                             }
+BrkStmt: BREAK ';'                  {$$ = createTree(TYPE_VOID, 0, NODE_BREAK, NULL, NULL, NULL, NULL);}
+
+ContStmt: CONT ';'                  {$$ = createTree(TYPE_VOID, 0, NODE_CONT, NULL, NULL, NULL, NULL);}
 
 InputStmt: READ '(' ID ')' ';'      {$$ = createTree(TYPE_VOID, 0, NODE_READ, NULL, $3, NULL, NULL);}
          ;

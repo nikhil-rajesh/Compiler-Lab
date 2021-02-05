@@ -17,6 +17,8 @@
 #define NODE_GE 16
 #define NODE_EQ 17
 #define NODE_NEQ 18
+#define NODE_BREAK 19
+#define NODE_CONT 20
 
 #define TYPE_VOID 0
 #define TYPE_INT 1

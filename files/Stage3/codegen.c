@@ -1,4 +1,5 @@
 int counter = -1, i, j, label=0;
+int whileStart = -1, whileEnd = -1;
 extern FILE *intermediate;
 
 int getlabel() {
@@ -16,6 +17,7 @@ int freeReg() {
 }
 int codegen(struct tnode* t) {
     int r1, r2, r3, l1, l2, number, status=0;
+    int prevWhileStart, prevWhileEnd;
 
     if(t == NULL) {
         return -1;
@@ -165,6 +167,14 @@ int codegen(struct tnode* t) {
         case NODE_WHILE:
             l1 = getlabel();
             l2 = getlabel();
+
+            // Store old while start and end
+            prevWhileStart = whileStart;
+            prevWhileEnd = whileEnd;
+            // Change to new start and end labels
+            whileStart = l1;
+            whileEnd = l2;
+
             fprintf(intermediate, "L%d:\n", l1);
             r1 = codegen(t->left);
             fprintf(intermediate, "JZ R%d,L%d\n", r1, l2);
@@ -172,6 +182,18 @@ int codegen(struct tnode* t) {
             number = codegen(t->right);
             fprintf(intermediate, "JMP L%d\n", l1);
             fprintf(intermediate, "L%d:\n", l2);
+
+            // Restore while start and end labels
+            whileStart = prevWhileStart;
+            whileEnd = prevWhileEnd;
+            break;
+        case NODE_BREAK:
+            if(whileEnd != -1)
+                fprintf(intermediate, "JMP L%d\n", whileEnd);
+            break;
+        case NODE_CONT:
+            if(whileStart != -1)
+                fprintf(intermediate, "JMP L%d\n", whileStart);
             break;
     }
 }

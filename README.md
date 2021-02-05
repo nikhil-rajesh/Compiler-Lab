@@ -5,8 +5,8 @@ This was done as part of a Compiler Lab course I took up in my 6th Semester at N
 ## Progress
 - [x] Stage 0
 - [x] Stage 1
-- [ ] Stage 2
-- [ ] Stage 3
+- [x] Stage 2
+- [x] Stage 3
 - [ ] Stage 4
 - [ ] Stage 5
 - [ ] Stage 6
