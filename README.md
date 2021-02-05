@@ -3,15 +3,15 @@ This is my implementation of an experimental compiler that I made using the docu
 This was done as part of a Compiler Lab course I took up in my 6th Semester at NITC.
 
 ## Progress
-- [x] Stage 0
-- [x] Stage 1
-- [x] Stage 2
-- [x] Stage 3
-- [ ] Stage 4
-- [ ] Stage 5
-- [ ] Stage 6
-- [ ] Stage 7
-- [ ] Stage 8
+- :heavy_check_mark: Stage 0
+- :heavy_check_mark: Stage 1
+- :heavy_check_mark: Stage 2
+- :heavy_check_mark: Stage 3
+- :o: Stage 4
+- :o: Stage 5
+- :o: Stage 6
+- :o: Stage 7
+- :o: Stage 8
 
 ## Running
 The environment can be setup using the instructions provided [here](https://gist.github.com/anandubajith/c924be647fd2d164e478e9e9c7cf4961).<br/>
