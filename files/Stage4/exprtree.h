@@ -3,6 +3,7 @@
 #define NODE_MINUS 2
 #define NODE_MUL 3
 #define NODE_DIV 4
+#define NODE_MOD 23
 #define NODE_ID 5
 #define NODE_NUM 6
 #define NODE_ASSGN 7
@@ -20,6 +21,7 @@
 #define NODE_BREAK 19
 #define NODE_CONT 20
 #define NODE_STRVAL 21
+#define NODE_ARRAY 22
 
 #define TYPE_VOID 0
 #define TYPE_INT 1

@@ -16,6 +16,9 @@ void GInstall(char *name, int type, int size) {
         yyerror("Variable re-initialized");
         printf("\"%s\"\n", name);
         exit(1);
+    } else if(size < 1) {
+        yyerror("Invalid array size");
+        exit(1);
     }
 
     temp = (struct Gsymbol *)malloc(sizeof(struct Gsymbol));
@@ -38,8 +41,7 @@ void GInstall(char *name, int type, int size) {
     return;
 }
 
-void printSymbolTable()
-{
+void printSymbolTable() {
     struct Gsymbol* temp = Ghead;
     while (temp != NULL) {
         printf("%s---%d---%d\n", temp->name, temp->type, temp->binding);

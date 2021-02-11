@@ -7,7 +7,7 @@ This was done as part of a Compiler Lab course I took up in my 6th Semester at N
 - :heavy_check_mark: CodeGeneration for Arithmetic Expressions
 - :heavy_check_mark: Introduction to static storage allocation
 - :heavy_check_mark: Adding Flow Control Statements
-- :o: User Defined Variables and arrays
+- :heavy_check_mark: User Defined Variables and arrays
 - :o: Adding Functions
 - :o: User defined types and Dynamic Memory Allocation
 - :o: Adding Objects – Data encapsulation

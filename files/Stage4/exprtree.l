@@ -45,6 +45,7 @@ str \"(\\.|[^\\\"])*\"
 "-"         {return MINUS;}
 "*"         {return MUL;}
 "/"         {return DIV;}
+"%"         {return MOD;}
 "="         {return ASSGN;}
 {id}        {
                 variable = (char*)malloc(sizeof(yytext));
@@ -59,7 +60,7 @@ str \"(\\.|[^\\\"])*\"
                 return STRVAL;
             }
 [ \t\n]	    {}
-[();,]       {return *yytext;}
+[()\[\];,]       {return *yytext;}
 .	    {
                 yyerror("unknown character\n");
                 exit(1);

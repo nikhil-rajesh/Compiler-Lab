@@ -15,6 +15,22 @@ int freeReg() {
     if(counter >= 0)
         counter--;
 }
+
+int getMemoryAddress(struct tnode* t) {
+    int r;
+    if(t->nodetype == NODE_ID) {
+        r = getReg();
+        fprintf(intermediate, "MOV R%d, %d\n", r, t->Gentry->binding);
+        return r;
+    } else if(t->nodetype == NODE_ARRAY) {
+        r = codegen(t->right);
+        fprintf(intermediate, "ADD R%d, %d\n", r, t->left->Gentry->binding);
+        return r;
+    } else {
+        return -1;
+    }
+}
+
 int codegen(struct tnode* t) {
     int r1, r2, r3, l1, l2, number, status=0;
     int prevWhileStart, prevWhileEnd;
@@ -37,9 +53,12 @@ int codegen(struct tnode* t) {
             fprintf(intermediate, "MOV R%d, %s\n", r1, t->varname);
             return r1;
         case NODE_ID:
-            r1 = getReg();
-            number = t->Gentry->binding;
-            fprintf(intermediate, "MOV R%d, [%d]\n", r1, number);
+            r1 = getMemoryAddress(t);
+            fprintf(intermediate, "MOV R%d, [R%d]\n", r1, r1);
+            return r1;
+        case NODE_ARRAY:
+            r1 = getMemoryAddress(t);
+            fprintf(intermediate, "MOV R%d, [R%d]\n", r1, r1);
             return r1;
         case NODE_PLUS:
             r1 = codegen(t->left);
@@ -63,6 +82,12 @@ int codegen(struct tnode* t) {
             r1 = codegen(t->left);
             r2 = codegen(t->right);
             fprintf(intermediate, "DIV R%d, R%d\n", r1, r2);
+            freeReg();
+            return r1;
+        case NODE_MOD:
+            r1 = codegen(t->left);
+            r2 = codegen(t->right);
+            fprintf(intermediate, "MOD R%d, R%d\n", r1, r2);
             freeReg();
             return r1;
         case NODE_LT:
@@ -102,9 +127,10 @@ int codegen(struct tnode* t) {
             freeReg();
             return r1;
         case NODE_ASSGN:
-            number = t->left->Gentry->binding;
+            r1 = getMemoryAddress(t->left);
             r2 = codegen(t->right);
-            fprintf(intermediate, "MOV [%d], R%d\n", number, r2);
+            fprintf(intermediate, "MOV [R%d], R%d\n", r1, r2);
+            freeReg();
             freeReg();
             return 0;
         case NODE_WRITE:
@@ -129,7 +155,6 @@ int codegen(struct tnode* t) {
             counter = status;
             break;
         case NODE_READ:
-            number = t->left->Gentry->binding;
             for (i = 0; i <= counter; i++)
                 fprintf(intermediate, "PUSH R%d\n", i);
             status = counter;
@@ -138,8 +163,11 @@ int codegen(struct tnode* t) {
             fprintf(intermediate, "PUSH R0\n"); // function code "Write"
             fprintf(intermediate, "MOV R0,-1\n");
             fprintf(intermediate, "PUSH R0\n"); //Argument 1
-            fprintf(intermediate, "MOV R0,%d\n", number);
-            fprintf(intermediate, "PUSH R0\n"); //Argument 1
+
+            r1 = getMemoryAddress(t->left);
+            fprintf(intermediate, "PUSH R%d\n", r1); //Argument 2
+            freeReg();
+
             fprintf(intermediate, "ADD SP,2\n");
             fprintf(intermediate, "CALL 0\n");
             fprintf(intermediate, "SUB SP,5\n");
