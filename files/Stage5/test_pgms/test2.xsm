@@ -1,0 +1,24 @@
+decl
+    int n,test(int a, int b), result;
+enddecl
+
+int test(int a, int b) {
+    decl
+    enddecl
+    begin
+        result = a + b;
+        return result;
+    end
+}
+
+int main() {
+    decl
+        int result;
+    enddecl
+    begin
+        read(n);
+        test(2, 4);
+        write(result);
+        return 0;
+    end
+}
