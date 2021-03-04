@@ -1,5 +1,8 @@
 decl
-    int n,test(int a, int b), result;
+    int test(int a, int b);
+    str test2();
+    int result;
+    int n;
 enddecl
 
 int test(int a, int b) {

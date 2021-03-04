@@ -22,24 +22,26 @@ int checkAvailability(char *name, int global) {
 }
 
 void assignType(struct ASTNode* node, int func) {
-    Gtemp = GLookup(node->name);
-
-    if(Gtemp != NULL) {
-        node->Gentry = Gtemp;
-        node->type = Gtemp->type;
-
-        if(func && Gtemp->size != -1) {
-            yyerror("conflict in ID NodeType : Expected Function \n");
-            printf("%s\n", node->name);
-            exit(1);
-        }
+    Ltemp = LLookup(node->name);
+    if(Ltemp != NULL && !func) {
+        node->Lentry = Ltemp;
+        node->type = Ltemp->type;
     } else {
-        Ltemp = LLookup(node->name);
-        if(Ltemp != NULL) {
-            node->Lentry = Ltemp;
-            node->type = Ltemp->type;
+        Gtemp = GLookup(node->name);
+        if(Gtemp != NULL) {
+            node->Gentry = Gtemp;
+            node->type = Gtemp->type;
+
+            if(func && Gtemp->size != -1) {
+                yyerror("conflict in ID NodeType : Expected Function \n");
+                printf("%s\n", node->name);
+                exit(1);
+            }
         } else {
-            yyerror("Variable '%s' not declared!", node->name);
+            if(func)
+                yyerror("Function '%s' not declared!", node->name);
+            else
+                yyerror("Variable '%s' not declared!", node->name);
             exit(1);
         }
     }

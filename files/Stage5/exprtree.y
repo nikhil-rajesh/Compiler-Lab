@@ -16,6 +16,9 @@
         FILE *fp;
         FILE *intermediate;
         void print(int);
+        struct Paramstruct *argList1, *argList2;
+        int testing = 1; // can use to test ASTree
+        int declCount = 0, defCount = 0; // Definition and Declaration count of functions
 %}
 
 %union {
@@ -59,12 +62,12 @@ GDeclList: GDeclList GDecl
 GDecl: Type GIdList ';'
      ;
 
-Type: INT   {declaration_type = TYPE_INT;}
-    | STR   {declaration_type = TYPE_STR;}
+Type: INT   {declarationType = TYPE_INT;}
+    | STR   {declarationType = TYPE_STR;}
     ;
 
-FType: INT   {FDeclaration_type = TYPE_INT;}
-     | STR   {FDeclaration_type = TYPE_STR;}
+FType: INT   {FDeclarationType = TYPE_INT;}
+     | STR   {FDeclarationType = TYPE_STR;}
      ;
 
 
@@ -73,14 +76,15 @@ GIdList: GIdList ',' GId
        ;
 
 GId: ID '(' ParamList ')'   {
+                                declCount++;
                                 checkAvailability($1->name, 1);
-                                GInstall($1->name, declaration_type, -1, Phead);
+                                GInstall($1->name, declarationType, -1, Phead);
                                 Phead = NULL;
                                 Ptail = NULL;
                             }
    | ID                     {
                                 checkAvailability($1->name, 1);
-                                GInstall($1->name, declaration_type, 1, NULL);
+                                GInstall($1->name, declarationType, 1, NULL);
                             }
    | ID '[' NUM ']'         {
                                 checkAvailability($1->name, 1);
@@ -88,7 +92,7 @@ GId: ID '(' ParamList ')'   {
                                     yyerror("Invalid array size", NULL);
                                     exit(1);
                                 }
-                                GInstall($1->name, declaration_type, $3->value.intval, NULL);
+                                GInstall($1->name, declarationType, $3->value.intval, NULL);
                             }
    ;
 
@@ -97,8 +101,48 @@ FDefBlock: FDefBlock FDef
          ;
 
 FDef: Type ID '(' ParamList ')' '{' LDeclBlock Body '}' {
-                                                            printLSymbolTable();
-                                                            print_dot($8, $2->name);
+                                                            defCount++;
+                                                            Gtemp = GLookup($2->name);
+
+                                                            if(Gtemp == NULL) {
+                                                                yyerror("Function %s not declared", $2->name);
+                                                                exit(1);
+                                                            }
+
+                                                            if(Gtemp->type != declarationType) {
+                                                               yyerror("%s : Function type does not match declaration", $2->name);
+                                                               exit(1);
+                                                            }
+
+                                                            argList1 = Phead;
+                                                            argList2 = Gtemp->paramlist;
+
+                                                            while(argList1 != NULL && argList2 != NULL) {
+                                                                if(argList1->type != argList2->type) {
+                                                                    yyerror("%s : Conflict in argument types", $2->name);
+                                                                    exit(1);
+                                                                }
+
+                                                                if(strcmp(argList1->name, argList2->name)) {
+                                                                    yyerror("%s : Conflict in argument names", $2->name);
+                                                                    exit(1);
+                                                                }
+
+                                                                argList1 = argList1->next;
+                                                                argList2 = argList2->next;
+                                                            }
+
+                                                            if ((argList1 != NULL) || (argList2 != NULL)) {
+                                                                yyerror("Not enough arguments", NULL);
+                                                                exit(1);
+                                                            }
+
+                                                            if(testing) {
+                                                                printLSymbolTable();
+                                                                print_dot($8, $2->name);
+                                                            } else {
+                                                            }
+
                                                             Phead = NULL;
                                                             Ptail = NULL;
                                                             Lhead = NULL;
@@ -111,19 +155,32 @@ ParamList: ParamList ',' Param
          |
          ;
 
-Param: Type ID  {
+Param: FType ID  {
                     checkAvailability($2->name, 0);
-                    PInstall($2->name, declaration_type);
+                    PInstall($2->name, FDeclarationType);
                 }
      ;
 
 MainBlock: Type MAIN '(' ')' '{' LDeclBlock Body '}'   {
-                                                            printGSymbolTable();
-                                                            printLSymbolTable();
-                                                            print_dot($7, "main");
-                                                            //fprintf(intermediate, "MAIN:\n");
-                                                            //codegen($3); 
-                                                            //fprintf(intermediate, "RET\n");
+                                                            if(defCount != declCount) {
+                                                                yyerror("All functions declared need to be defined\n", NULL);
+                                                                exit(1);
+                                                            }
+
+                                                            if(declarationType != TYPE_INT) {
+                                                                yyerror("Main return type should be of integer type\n");
+                                                                exit(1);
+                                                            }
+
+                                                            if(testing) {
+                                                                printGSymbolTable();
+                                                                printLSymbolTable();
+                                                                print_dot($7, "main");
+                                                            } else {
+                                                                //fprintf(intermediate, "MAIN:\n");
+                                                                codegen($7); 
+                                                                //fprintf(intermediate, "RET\n");
+                                                            }
 
                                                             Lhead = NULL;
                                                             Ltail = NULL;
@@ -144,7 +201,7 @@ LDecl: FType IdList ';'
 IdList: IdList, IdList
       | ID      {
                     checkAvailability($1->name, 0);
-                    LInstall($1->name, FDeclaration_type);
+                    LInstall($1->name, FDeclarationType);
                 }
       ;
 
@@ -153,7 +210,7 @@ Body: START Slist RetStmt END   {$$ = TreeCreate(TYPE_VOID, NODE_CONNECTOR, NULL
     ;
 
 RetStmt: RETURN expr ';'    {
-                                if(declaration_type == $2->type) {
+                                if(declarationType == $2->type) {
                                     $$ = TreeCreate(TYPE_VOID, NODE_RET, NULL, NULL, NULL, $2, NULL, NULL);
                                 } else {
                                     yyerror("Return type mismatch", NULL);

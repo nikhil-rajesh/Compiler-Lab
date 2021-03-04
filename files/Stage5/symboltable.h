@@ -1,5 +1,5 @@
-int declaration_type;   // To pass variable type in yacc
-int FDeclaration_type;  // To pass variable type to functions in yacc
+int declarationType;   // To pass variable type in yacc
+int FDeclarationType;  // To pass variable type to functions in yacc
 int totalCount = 4096;  // Memory address of next variable
 int fLabelCount = 0;
 
