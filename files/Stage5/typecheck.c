@@ -1,7 +1,3 @@
-struct Gsymbol* Gtemp;
-struct Lsymbol* Ltemp;
-struct Paramstruct* Ptemp;
-
 int checkAvailability(char *name, int global) {
     if(global) {
         Gtemp = GLookup(name);
@@ -21,9 +17,13 @@ int checkAvailability(char *name, int global) {
     return 1;
 }
 
-void assignType(struct ASTNode* node, int func) {
+void assignType(struct ASTNode* node, int code) {
+    // Code 0 - Local or Global Variable
+    // Code 1 - Function
+    // Code 2 - Array
+    
     Ltemp = LLookup(node->name);
-    if(Ltemp != NULL && !func) {
+    if(Ltemp != NULL && code == 0) {
         node->Lentry = Ltemp;
         node->type = Ltemp->type;
     } else {
@@ -32,13 +32,13 @@ void assignType(struct ASTNode* node, int func) {
             node->Gentry = Gtemp;
             node->type = Gtemp->type;
 
-            if(func && Gtemp->size != -1) {
+            if(code == 1 && Gtemp->size != -1) {
                 yyerror("conflict in ID NodeType : Expected Function \n");
                 printf("%s\n", node->name);
                 exit(1);
             }
         } else {
-            if(func)
+            if(code == 1)
                 yyerror("Function '%s' not declared!", node->name);
             else
                 yyerror("Variable '%s' not declared!", node->name);

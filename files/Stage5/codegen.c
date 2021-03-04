@@ -18,17 +18,24 @@ int freeReg() {
 
 int getMemoryAddress(struct ASTNode* t) {
     int r;
-    if(t->nodetype == NODE_ID) {
+    if(t->nodetype == NODE_ID && t->Gentry != NULL) {
         r = getReg();
         fprintf(intermediate, "MOV R%d, %d\n", r, t->Gentry->binding);
+        return r;
+    } else if(t->nodetype == NODE_ID) {
+        r = getReg();
+        fprintf(intermediate, "MOV R%d,BP\n", r);
+        fprintf(intermediate, "ADD R%d,%d\n", r, t->Lentry->binding);
         return r;
     } else if(t->nodetype == NODE_ARRAY) {
         r = codegen(t->ptr2);
         fprintf(intermediate, "ADD R%d, %d\n", r, t->ptr1->Gentry->binding);
         return r;
     } else {
-        return -1;
+        printf("Cannot find memory address of nodetype %d", t->nodetype);
+        exit(1);
     }
+    return -1;
 }
 
 int codegen(struct ASTNode* t) {
@@ -227,5 +234,8 @@ int codegen(struct ASTNode* t) {
             if(whileStart != -1)
                 fprintf(intermediate, "JMP L%d\n", whileStart);
             break;
+        default:
+            printf("%d: This shouldn't have happened", t->nodetype);
+            exit(1);
     }
 }

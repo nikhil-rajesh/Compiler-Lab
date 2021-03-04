@@ -8,7 +8,7 @@ default: expl-bin ltranslate
 expl-bin: lex.yy.o y.tab.o
 	$(CC) $(CFLAGS) -o expl-bin lex.yy.o y.tab.o
 
-y.tab.o: y.tab.c y.tab.h exprtree.h ast.c initialize.c codegen.c typecheck.c symboltable.c symboltable.h
+y.tab.o: y.tab.c y.tab.h exprtree.h ast.c initialize.c codegen.c typecheck.c typecheck.h symboltable.c symboltable.h
 	$(CC) $(CFLAGS) -w -c y.tab.c
 
 lex.yy.o: lex.yy.c y.tab.c exprtree.h

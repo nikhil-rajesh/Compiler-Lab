@@ -2,8 +2,9 @@
 	#include <stdlib.h>
 	#include <stdio.h>
 	#include "exprtree.h"
-	#include "ast.c"
         #include "symboltable.h"
+        #include "typecheck.h"
+	#include "ast.c"
         #include "symboltable.c"
         #include "codegen.c"
         #include "initialize.c"
@@ -20,7 +21,7 @@
 
         // For testing
         #include "printAbsTree.c"
-        int testing = 1; // can use to test ASTree
+        int testing = 0; // can use to test ASTree
 %}
 
 %union {
@@ -143,6 +144,18 @@ FDef: Type ID '(' ParamList ')' '{' LDeclBlock Body '}' {
                                                                 printLSymbolTable();
                                                                 print_dot($8, $2->name);
                                                             } else {
+                                                                fprintf(intermediate, "F%d:\n",Gtemp->flabel);
+                                                                fprintf(intermediate, "PUSH BP\n");
+                                                                fprintf(intermediate, "MOV BP,SP\n");
+
+                                                                Ltemp = Lhead;
+                                                                while(Ltemp != NULL) {
+                                                                    if(Ltemp->binding > 0)
+                                                                        fprintf(intermediate, "PUSH R0\n");
+                                                                    Ltemp = Ltemp->next;
+                                                                }
+
+                                                                codegen($8);
                                                             }
 
                                                             Phead = NULL;
@@ -179,9 +192,17 @@ MainBlock: Type MAIN '(' ')' '{' LDeclBlock Body '}'   {
                                                                 printLSymbolTable();
                                                                 print_dot($7, "main");
                                                             } else {
-                                                                //fprintf(intermediate, "MAIN:\n");
+                                                                fprintf(intermediate, "MAIN:\n");
+                                                                fprintf(intermediate, "MOV BP,SP\n");
+
+                                                                Ltemp = Lhead;
+                                                                while (Ltemp != NULL)
+                                                                {
+                                                                    fprintf(intermediate, "PUSH R0\n");
+                                                                    Ltemp = Ltemp->next;
+                                                                }
+
                                                                 codegen($7);
-                                                                //fprintf(intermediate, "RET\n");
                                                             }
 
                                                             Lhead = NULL;
@@ -343,11 +364,11 @@ id: ID                  {
                             $$ = $1;
                         }
   | ID '[' NUM ']'      {
-                            assignType($1, 0);
+                            assignType($1, 2);
                             $$ = TreeCreate($1->type, NODE_ARRAY, NULL, NULL, NULL, $1, $3, NULL);
                         }
   | ID '[' id ']'       {
-                            assignType($1, 0);
+                            assignType($1, 2);
                             $$ = TreeCreate($1->type, NODE_ARRAY, NULL, NULL, NULL, $1, $3, NULL);
                         }
   ;

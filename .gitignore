@@ -2,3 +2,4 @@
 **/*.out
 **/y.tab.c
 **/y.tab.h
+**/*.gv

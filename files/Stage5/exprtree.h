@@ -22,8 +22,8 @@
 #define NODE_CONT 20
 #define NODE_STRVAL 21
 #define NODE_ARRAY 22
-#define NODE_RET 23
-#define NODE_FUNC 24
+#define NODE_RET 24
+#define NODE_FUNC 25
 
 #define TYPE_VOID 0
 #define TYPE_INT 1
