@@ -8,8 +8,7 @@
         #include "codegen.c"
         #include "initialize.c"
         #include "typecheck.c"
-        // For testing
-        #include "printAbsTree.c"
+
 	int yylex(void);
         extern FILE *yyin;
         extern int lineno;
@@ -17,8 +16,11 @@
         FILE *intermediate;
         void print(int);
         struct Paramstruct *argList1, *argList2;
-        int testing = 1; // can use to test ASTree
         int declCount = 0, defCount = 0; // Definition and Declaration count of functions
+
+        // For testing
+        #include "printAbsTree.c"
+        int testing = 1; // can use to test ASTree
 %}
 
 %union {
@@ -178,7 +180,7 @@ MainBlock: Type MAIN '(' ')' '{' LDeclBlock Body '}'   {
                                                                 print_dot($7, "main");
                                                             } else {
                                                                 //fprintf(intermediate, "MAIN:\n");
-                                                                codegen($7); 
+                                                                codegen($7);
                                                                 //fprintf(intermediate, "RET\n");
                                                             }
 
@@ -198,7 +200,7 @@ LDecList: LDecList LDecl
 LDecl: FType IdList ';'
      ;
 
-IdList: IdList, IdList
+IdList: IdList ',' IdList
       | ID      {
                     checkAvailability($1->name, 0);
                     LInstall($1->name, FDeclarationType);
@@ -330,7 +332,7 @@ expr : expr PLUS expr	{
      ;
 
 func: ID '(' ExprList ')'   {
-                                assignType($1, 1); 
+                                assignType($1, 1);
                                 $1->nodetype = NODE_FUNC;
                                 $1->ptr1 = reverseList($3);
                                 $$ = $1;

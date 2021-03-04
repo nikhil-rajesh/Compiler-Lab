@@ -1,6 +1,7 @@
 int declarationType;   // To pass variable type in yacc
 int FDeclarationType;  // To pass variable type to functions in yacc
 int totalCount = 4096;  // Memory address of next variable
+int localBindingStart = 1;
 int fLabelCount = 0;
 
 struct Paramstruct {

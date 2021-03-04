@@ -65,13 +65,13 @@ void LInstall(char *name, int type) {
     temp->name = (char*)malloc(sizeof(name));
     strcpy(temp->name, name);
     temp->type = type;
+    temp->binding = localBindingStart;
+    localBindingStart++;
 
     if (Lhead != NULL) {
-        temp->binding = Ltail->binding + 1;
         Ltail->next = temp;
         Ltail = temp;
     } else {
-        temp->binding = 0;
         Lhead = temp;
         Ltail = temp;
     }
@@ -81,10 +81,21 @@ void LInstall(char *name, int type) {
 
 void InstallParamsInLocal() {
     struct Paramstruct *temp = Phead;
+    int count = 0;
+
+    while(temp != NULL) {
+        count++;
+        temp = temp->next;
+    }
+
+    localBindingStart = -1*count - 3;
+    temp = Phead;
     while(temp != NULL) {
         LInstall(temp->name, temp->type);
         temp = temp->next;
     }
+
+    localBindingStart = 1;
     return;
 }
 
@@ -110,7 +121,7 @@ void printGSymbolTable() {
     struct Gsymbol* temp = Ghead;
     printf("\nGlobal Variables:\n");
     while (temp != NULL) {
-        printf("%s---%d---%d\n", temp->name, temp->type, temp->binding);
+        printf("%s --- %d --- %d\n", temp->name, temp->type, temp->binding);
         temp = temp->next;
     }
 }
@@ -119,7 +130,7 @@ void printLSymbolTable() {
     struct Lsymbol* temp = Lhead;
     printf("\nLocal Variables:\n");
     while (temp != NULL) {
-        printf("%s---%d---%d\n", temp->name, temp->type, temp->binding);
+        printf("%s --- %d --- %d\n", temp->name, temp->type, temp->binding);
         temp = temp->next;
     }
 }
