@@ -193,6 +193,7 @@ MainBlock: Type MAIN '(' ')' '{' LDeclBlock Body '}'   {
                                                                 print_dot($7, "main");
                                                             } else {
                                                                 fprintf(intermediate, "MAIN:\n");
+                                                                fprintf(intermediate, "PUSH BP\n");
                                                                 fprintf(intermediate, "MOV BP,SP\n");
 
                                                                 Ltemp = Lhead;
@@ -212,6 +213,7 @@ MainBlock: Type MAIN '(' ')' '{' LDeclBlock Body '}'   {
 
 LDeclBlock: DECL LDecList ENDDECL   {InstallParamsInLocal();}
           | DECL ENDDECL            {InstallParamsInLocal();}
+          |                         {InstallParamsInLocal();}
           ;
 
 LDecList: LDecList LDecl

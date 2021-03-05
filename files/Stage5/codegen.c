@@ -15,6 +15,28 @@ int freeReg() {
     if(counter >= 0)
         counter--;
 }
+int freeAllReg() {
+    counter = -1;
+}
+
+int pushArguments(struct ASTNode *t) {
+    int r;
+    while(t != NULL) {
+        r = codegen(t);
+        fprintf(intermediate, "PUSH R%d\n", r);
+        freeReg();
+        t = t->arglist;
+    }
+}
+
+int popArguments(struct ASTNode *t) {
+    int r = getReg();
+    while(t != NULL) {
+        fprintf(intermediate, "POP R%d\n", r);
+        t = t->arglist;
+    }
+    freeReg();
+}
 
 int getMemoryAddress(struct ASTNode* t) {
     int r;
@@ -233,6 +255,51 @@ int codegen(struct ASTNode* t) {
         case NODE_CONT:
             if(whileStart != -1)
                 fprintf(intermediate, "JMP L%d\n", whileStart);
+            break;
+        case NODE_RET:
+            r1 = getReg();
+            r2 = codegen(t->ptr1);
+            fprintf(intermediate, "MOV R%d,BP\n", r1);
+            fprintf(intermediate, "ADD R%d,%d\n", r1, -2);
+            fprintf(intermediate, "MOV [R%d], R%d\n", r1, r2);
+            freeReg();
+            freeReg();
+
+            Ltemp = Lhead;
+            while(Ltemp != NULL) {
+                if(Ltemp->binding > 0)
+                    fprintf(intermediate, "POP R0\n");
+                Ltemp = Ltemp->next;
+            }
+
+            fprintf(intermediate, "POP BP\n");
+            fprintf(intermediate, "RET\n");
+            break;
+        case NODE_FUNC:
+            for (i = 0; i <= counter; i++)
+                fprintf(intermediate, "PUSH R%d\n", i);
+            status = counter;
+            freeAllReg();
+
+            pushArguments(t->ptr1); //Push Arguments
+            fprintf(intermediate, "PUSH R0\n"); //Space for return value
+            fprintf(intermediate, "CALL F%d\n", t->Gentry->flabel); //Space for return value
+
+            r1 = status + 1;
+            fprintf(intermediate, "POP R%d\n", r1); // for return value
+            if (status == -1)
+                r2 = getReg();
+
+            popArguments(t->ptr1); // Pop Arguments
+
+            if (status == -1)
+                freeReg();
+
+            for (i = status; i >= 0; i--)
+                fprintf(intermediate, "POP R%d\n", i);
+            counter = status;
+            r1 = getReg();
+            return r1;
             break;
         default:
             printf("%d: This shouldn't have happened", t->nodetype);

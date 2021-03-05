@@ -1,7 +1,7 @@
 #!/bin/bash
 . ../load_env.bash
 shopt -s expand_aliases
-CURR_DIR="files/Stage4"
+CURR_DIR="files/Stage5"
 wd=`pwd`
 
 make > /dev/null 2>&1

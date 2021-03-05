@@ -88,7 +88,7 @@ void InstallParamsInLocal() {
         temp = temp->next;
     }
 
-    localBindingStart = -1*count - 3;
+    localBindingStart = -1*count - 2;
     temp = Phead;
     while(temp != NULL) {
         LInstall(temp->name, temp->type);
