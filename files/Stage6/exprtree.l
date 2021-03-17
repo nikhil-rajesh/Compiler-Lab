@@ -38,6 +38,9 @@ str \"(\\.|[^\\\"])*\"
 "continue"  {return CONT;}
 "decl"      {return DECL;}
 "enddecl"   {return ENDDECL;}
+"type"      {return TYPE;}
+"endtype"   {return ENDTYPE;}
+"NULL"      {return NILL;}
 "int"       {return INT;}
 "str"       {return STR;}
 "=="        {return EQ;}

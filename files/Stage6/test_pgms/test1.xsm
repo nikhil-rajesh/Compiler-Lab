@@ -1,0 +1,16 @@
+type
+    linkedList {
+        int data;
+        linkedList next;
+    }
+
+    markList {
+        str name;
+        linkedList marks;
+    }
+endtype
+int main() {
+    begin
+        return 0;
+    end
+}

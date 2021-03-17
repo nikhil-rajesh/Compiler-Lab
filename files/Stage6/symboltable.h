@@ -61,5 +61,6 @@ void LInstall(char* name, struct Typetable *type);
 struct Lsymbol *Lhead, *Ltail;
 
 
-void printLSymbolTable(); // FOR TESTING
-void printGSymbolTable(); // FOR TESTING
+void printLSymbolTable(char* name);   // FOR TESTING
+void printGSymbolTable();   // FOR TESTING
+void printTypeTable();      // FOR TESTING

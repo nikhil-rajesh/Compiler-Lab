@@ -191,18 +191,36 @@ void PInstall(char *name, struct Typetable *type) {
 
 void printGSymbolTable() {
     struct Gsymbol* temp = Ghead;
-    printf("\nGlobal Variables:\n");
+    printf("-----Global Variables-----\n");
     while (temp != NULL) {
         printf("%s --- %d --- %d\n", temp->name, temp->type, temp->binding);
         temp = temp->next;
     }
+    printf("\n");
 }
 
-void printLSymbolTable() {
+void printLSymbolTable(char* funcName) {
     struct Lsymbol* temp = Lhead;
-    printf("\nLocal Variables:\n");
+    printf("-----Local Variables (%s)-----\n", funcName);
     while (temp != NULL) {
         printf("%s --- %d --- %d\n", temp->name, temp->type, temp->binding);
         temp = temp->next;
     }
+    printf("\n");
+}
+
+void printTypeTable() {
+    printf("-----TYPE TABLE-----\n");
+    struct Typetable *temp = Thead;
+    struct Fieldlist *ftemp;
+    while(temp != NULL) {
+        printf("%s\t%d\n", temp->name, temp->size);
+        ftemp = temp->fields;
+        while(ftemp != NULL) {
+            printf("\t%d\t%s\t%s\n", ftemp->fieldIndex, ftemp->name, ftemp->type->name);
+            ftemp = ftemp->next;
+        }
+        temp = temp->next;
+    }
+    printf("\n");
 }

@@ -21,7 +21,7 @@
 
         // For testing
         #include "printAbsTree.c"
-        int testing = 0; // can use to test ASTree
+        int testing = 1; // can use to test ASTree
 %}
 
 %union {
@@ -30,7 +30,8 @@
 
 %token START END READ WRITE PLUS MINUS MUL DIV MOD ASSGN NUM ID
 %token IF THEN ELSE ENDIF WHILE DO ENDWHILE EQ NEQ LE GE LT GT
-%token BREAK CONT DECL ENDDECL INT STR STRVAL MAIN RETURN
+%token BREAK CONT DECL ENDDECL INT STR STRVAL MAIN RETURN TYPE
+%token ENDTYPE NILL
 
 %nonassoc LT GT LE GE
 %right EQ NEQ
@@ -41,21 +42,73 @@
 %type <nptr> NUM ID START END READ WRITE PLUS MINUS MUL DIV ASSGN
 %type <nptr> IF THEN ELSE ENDIF WHILE DO ENDWHILE EQ NEQ LE GE LT
 %type <nptr> GT BREAK CONT DECL ENDDECL INT STR STRVAL MOD MAIN RETURN
-%type <nptr> program Slist Stmt InputStmt OutputStmt AsgStmt expr id
-%type <nptr> BrkStmt ContStmt IfStmt WhileStmt Type GDeclBlock FDefBlock
-%type <nptr> MainBlock GDeclList GDecl GIdList GId ParamList FDef
-%type <nptr> LDeclBlock Body Param LDecList LDecl IdList RetStmt
-%type <nptr> ExprList func
+%type <nptr> TYPE ENDTYPE NILL
+%type <nptr> program Slist Stmt expr id Type
+%type <nptr> BrkStmt ContStmt IfStmt WhileStmt InputStmt OutputStmt AsgStmt
+%type <nptr> MainBlock FDefBlock FDef ParamList Param ExprList func 
+%type <nptr> LDeclBlock Body LDecList LDecl IdList RetStmt
+%type <nptr> GDeclBlock GDeclList GDecl GIdList GId
+%type <nptr> TypeDefBlock TypeDefList TypeDef UserDefinedType 
+%type <nptr> FieldDeclList FieldDecl
 
 %%
 
-program: GDeclBlock FDefBlock MainBlock {fclose(intermediate);}
-       | GDeclBlock MainBlock           {fclose(intermediate);}
-       | MainBlock                      {fclose(intermediate);}
+program: TypeDefBlock GDeclBlock FDefBlock MainBlock {fclose(intermediate);}
+       | TypeDefBlock GDeclBlock MainBlock           {fclose(intermediate);}
        ;
 
-GDeclBlock: DECL GDeclList ENDDECL      {initialize();}
-          | DECL ENDDECL                {initialize();}
+TypeDefBlock: TYPE TypeDefList ENDTYPE
+            | TYPE ENDTYPE
+            |
+            ;
+
+TypeDefList: TypeDefList TypeDef
+           | TypeDef
+           ;
+
+TypeDef: UserDefinedType '{' FieldDeclList '}'  { TInstall($1->name, Fhead); }
+       ;
+
+UserDefinedType: ID {
+                        tempASTNode = $1;
+                        $$ = $1;
+                    }
+               ;
+
+FieldDeclList: FieldDeclList FieldDecl 
+             | FieldDecl 
+             ;
+
+FieldDecl: FieldType ID ';' {
+                                if(FLookup($2->name, Fhead) != NULL) {
+                                    yyerror("Re-declaration of Field element %s\n", $2->name);
+                                    exit(1);
+                                }
+                                FInstall($2->name, declarationType);
+                            }
+         ;
+
+GDeclBlock: DECL GDeclList ENDDECL      {
+                                            initialize();
+                                            if(testing) {
+                                                printTypeTable();
+                                                printGSymbolTable();
+                                            }
+                                        }
+          | DECL ENDDECL                {
+                                            initialize();
+                                            if(testing) {
+                                                printTypeTable();
+                                                printGSymbolTable();
+                                            }
+                                        }
+          |                             {
+                                            initialize();
+                                            if(testing) {
+                                                printTypeTable();
+                                                printGSymbolTable();
+                                            }
+                                        }
           ;
 
 GDeclList: GDeclList GDecl
@@ -65,12 +118,41 @@ GDeclList: GDeclList GDecl
 GDecl: Type GIdList ';'
      ;
 
+FieldType: INT  {declarationType = TLookup("integer");}
+         | STR  {declarationType = TLookup("string");}
+         | ID   {
+                    declarationType = TLookup($1->name);
+                    if(declarationType == NULL) {
+                        if(strcmp(tempASTNode->name, $1->name) != 0) {
+                            yyerror("Undefined User Defined Type %s\n", $1->name);
+                            exit(1);
+                        } else {
+                            declarationType = TLookup("dummy");
+                        }
+                    }
+                }
+        ;
+
 Type: INT   {declarationType = TLookup("integer");}
     | STR   {declarationType = TLookup("string");}
+    | ID    {
+                declarationType = TLookup($1->name);
+                if(declarationType == NULL) {
+                    yyerror("Unknown user-defined type %s\n", $1->name);
+                    exit(1);
+                }
+            }
     ;
 
-FType: INT   {FDeclarationType = TLookup("integer");}
-     | STR   {FDeclarationType = TLookup("string");}
+FType: INT  {FDeclarationType = TLookup("integer");}
+     | STR  {FDeclarationType = TLookup("string");}
+     | ID   {
+                declarationType = TLookup($1->name);
+                if(declarationType == NULL) {
+                    yyerror("Unknown user-defined type %s\n", $1->name);
+                    exit(1);
+                }
+            }
      ;
 
 
@@ -141,7 +223,7 @@ FDef: Type ID '(' ParamList ')' '{' LDeclBlock Body '}' {
                                                             }
 
                                                             if(testing) {
-                                                                printLSymbolTable();
+                                                                printLSymbolTable($2->name);
                                                                 print_dot($8, $2->name);
                                                             } else {
                                                                 fprintf(intermediate, "F%d:\n",Gtemp->flabel);
@@ -188,8 +270,7 @@ MainBlock: Type MAIN '(' ')' '{' LDeclBlock Body '}'   {
                                                             }
 
                                                             if(testing) {
-                                                                printGSymbolTable();
-                                                                printLSymbolTable();
+                                                                printLSymbolTable("main");
                                                                 print_dot($7, "main");
                                                             } else {
                                                                 fprintf(intermediate, "MAIN:\n");
