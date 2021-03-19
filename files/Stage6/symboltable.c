@@ -193,7 +193,7 @@ void printGSymbolTable() {
     struct Gsymbol* temp = Ghead;
     printf("-----Global Variables-----\n");
     while (temp != NULL) {
-        printf("%s --- %d --- %d\n", temp->name, temp->type, temp->binding);
+        printf("%s --- %s --- %d\n", temp->name, temp->type->name, temp->binding);
         temp = temp->next;
     }
     printf("\n");
@@ -203,7 +203,7 @@ void printLSymbolTable(char* funcName) {
     struct Lsymbol* temp = Lhead;
     printf("-----Local Variables (%s)-----\n", funcName);
     while (temp != NULL) {
-        printf("%s --- %d --- %d\n", temp->name, temp->type, temp->binding);
+        printf("%s --- %s --- %d\n", temp->name, temp->type->name, temp->binding);
         temp = temp->next;
     }
     printf("\n");

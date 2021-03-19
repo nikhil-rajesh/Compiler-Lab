@@ -9,8 +9,17 @@ type
         linkedList marks;
     }
 endtype
+decl 
+    linkedList list;
+    markList marks, marksb;
+    int a;
+enddecl
 int main() {
+    decl
+        int b;
+    enddecl
     begin
+        b = NULL;
         return 0;
     end
 }

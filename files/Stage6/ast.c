@@ -36,3 +36,26 @@ struct ASTNode* reverseList(struct ASTNode* head) {
 
     return prev;
 }
+
+struct ASTNode* insertFieldId(struct ASTNode *field, struct ASTNode *id) {
+    struct ASTNode *last, *iterator = field;
+    struct Fieldlist *fieldList;
+    while(iterator->ptr2->ptr2 != NULL) {
+        iterator = iterator->ptr2;
+    }
+    last = iterator->ptr2;
+    fieldList = FLookup(id->name, last->type->fields);
+
+    if(
+            fieldList == NULL ||
+            last->type == TLookup("integer") ||
+            last->type == TLookup("string")) {
+        yyerror("Un-declared Field Variable '%s' access\n", id->name);
+        exit(1);
+    }
+
+    id->type = fieldList->type;
+    iterator->ptr2 = TreeCreate(TLookup("void"), NODE_FIELD, NULL, NULL, NULL, last, id, NULL);
+    field->type = id->type;
+    return field;
+}

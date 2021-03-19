@@ -17,6 +17,15 @@ int checkAvailability(char *name, int global) {
     return 1;
 }
 
+void assignTypeField(struct ASTNode* node, struct Fieldlist *fields) {
+    struct Fieldlist *temp = FLookup(node->name, fields);
+    if(temp == NULL) {
+        yyerror("No member field named '%s'", node->name);
+        exit(1);
+    }
+    node->type = temp->type;
+}
+
 void assignType(struct ASTNode* node, int code) {
     // Code 0 - Local or Global Variable
     // Code 1 - Function

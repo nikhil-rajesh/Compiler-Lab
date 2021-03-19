@@ -31,7 +31,7 @@
 %token START END READ WRITE PLUS MINUS MUL DIV MOD ASSGN NUM ID
 %token IF THEN ELSE ENDIF WHILE DO ENDWHILE EQ NEQ LE GE LT GT
 %token BREAK CONT DECL ENDDECL INT STR STRVAL MAIN RETURN TYPE
-%token ENDTYPE NILL
+%token ENDTYPE NILL FREE ALLOC
 
 %nonassoc LT GT LE GE
 %right EQ NEQ
@@ -42,14 +42,14 @@
 %type <nptr> NUM ID START END READ WRITE PLUS MINUS MUL DIV ASSGN
 %type <nptr> IF THEN ELSE ENDIF WHILE DO ENDWHILE EQ NEQ LE GE LT
 %type <nptr> GT BREAK CONT DECL ENDDECL INT STR STRVAL MOD MAIN RETURN
-%type <nptr> TYPE ENDTYPE NILL
+%type <nptr> TYPE ENDTYPE NILL FREE ALLOC
 %type <nptr> program Slist Stmt expr id Type
 %type <nptr> BrkStmt ContStmt IfStmt WhileStmt InputStmt OutputStmt AsgStmt
 %type <nptr> MainBlock FDefBlock FDef ParamList Param ExprList func 
 %type <nptr> LDeclBlock Body LDecList LDecl IdList RetStmt
 %type <nptr> GDeclBlock GDeclList GDecl GIdList GId
 %type <nptr> TypeDefBlock TypeDefList TypeDef UserDefinedType 
-%type <nptr> FieldDeclList FieldDecl
+%type <nptr> FieldDeclList FieldDecl Field
 
 %%
 
@@ -325,6 +325,16 @@ RetStmt: RETURN expr ';'    {
                             }
        ;
 
+Field: ID '.' ID        {
+                            assignType($1, 0);
+                            assignTypeField($3, $1->type->fields);
+                            $$ = TreeCreate($3->type, NODE_FIELD, NULL, NULL, NULL, $1, $3, NULL);
+                        }
+     | Field '.' ID     {
+                            $$ = insertFieldId($1, $3);
+                        }
+     ;
+
 Slist: Slist Stmt       {$$ = TreeCreate(TLookup("void"), NODE_CONNECTOR, NULL, NULL, NULL, $1, $2, NULL);}
     | Stmt              {$$ = $1;}
     ;
@@ -337,6 +347,21 @@ Stmt: InputStmt         {$$ = $1;}
     | BrkStmt           {$$ = $1;}
     | ContStmt          {$$ = $1;}
     | func ';'          {$$ = $1;}
+    | FREE '(' ID ')' ';'       {
+                                    assignType($3, 0);
+                                    if($3->type == TLookup("integer") || $3->type == TLookup("string")) {
+                                        yyerror("Cannot FREE a string or integer variable\n", NULL);
+                                        exit(1);
+                                    }
+                                    $$ = TreeCreate(TLookup("void"), NODE_FREE, NULL, NULL, NULL, $3, NULL, NULL);
+                                }
+    | FREE '(' Field ')' ';'    {
+                                    if($3->type == TLookup("integer") || $3->type == TLookup("string")) {
+                                        yyerror("Cannot FREE a string or integer variable\n", NULL);
+                                        exit(1);
+                                    }
+                                    $$ = TreeCreate(TLookup("void"), NODE_FREE, NULL, NULL, NULL, $3, NULL, NULL);
+                                }
     ;
 
 IfStmt: IF '(' expr ')' THEN Slist ELSE Slist ENDIF ';'     {
@@ -360,7 +385,20 @@ BrkStmt: BREAK ';'                  {$$ = TreeCreate(TLookup("void"), NODE_BREAK
 ContStmt: CONT ';'                  {$$ = TreeCreate(TLookup("void"), NODE_CONT, NULL, NULL, NULL, NULL, NULL, NULL);}
         ;
 
-InputStmt: READ '(' id ')' ';'      {$$ = TreeCreate(TLookup("void"), NODE_READ, NULL, NULL, NULL, $3, NULL, NULL);}
+InputStmt: READ '(' id ')' ';'      {
+                                        if($3->type != TLookup("integer") && $3->type != TLookup("string")) {
+                                            yyerror("Cannot READ a udt type\n", NULL);
+                                            exit(1);
+                                        }
+                                        $$ = TreeCreate(TLookup("void"), NODE_READ, NULL, NULL, NULL, $3, NULL, NULL);
+                                    }
+         | READ '(' Field ')' ';'   {
+                                        if($3->type != TLookup("integer") && $3->type != TLookup("string")) {
+                                            yyerror("Cannot READ a udt type\n", NULL);
+                                            exit(1);
+                                        }
+                                        $$ = TreeCreate(TLookup("void"), NODE_READ, NULL, NULL, NULL, $3, NULL, NULL);
+                                    }
          ;
 
 OutputStmt: WRITE '(' expr ')' ';'  {$$ = TreeCreate(TLookup("void"), NODE_WRITE, NULL, NULL, NULL, $3, NULL, NULL);}
@@ -370,6 +408,46 @@ AsgStmt: id ASSGN expr ';'          {
                                         typecheck($1->type, $3->type, '=');
                                         $$ = TreeCreate(TLookup("void"), NODE_ASSGN, NULL, NULL, NULL, $1, $3, NULL);
                                     }
+       | ID ASSGN expr ';'          {
+                                        assignType($1, 0);
+                                        typecheck($1->type, $3->type, '=');
+                                        $$ = TreeCreate(TLookup("void"), NODE_ASSGN, NULL, NULL, NULL, $1, $3, NULL);
+                                    }
+       | Field ASSGN ALLOC '(' ')' ';'  {
+                                            if($1->type == TLookup("integer") || $1->type == TLookup("string")) {
+                                                yyerror("Cannot ALLOC to string or integer variable\n", NULL);
+                                                exit(1);
+                                            }
+                                            $$ = TreeCreate(TLookup("void"), NODE_ASSGN, NULL, NULL, NULL, $1, $3, NULL);
+                                        }
+       | ID ASSGN ALLOC '(' ')' ';'     {
+                                            assignType($1, 0);
+                                            if($1->type == TLookup("integer") || $1->type == TLookup("string")) {
+                                                yyerror("Cannot ALLOC to string or integer variable\n", NULL);
+                                                exit(1);
+                                            }
+                                            $$ = TreeCreate(TLookup("void"), NODE_ASSGN, NULL, NULL, NULL, $1, $3, NULL);
+                                        }
+       | Field ASSGN expr ';'           {
+                                            typecheck($1->type, $3->type, '=');
+                                            $$ = TreeCreate(TLookup("void"), NODE_ASSGN, NULL, NULL, NULL, $1, $3, NULL);
+                    
+                                        }
+       | ID ASSGN NILL ';'              {
+                                            assignType($1, 0);
+                                            if($1->type == TLookup("integer") || $1->type == TLookup("string")) {
+                                                yyerror("Cannot assign NULL to string or integer variable\n", NULL);
+                                                exit(1);
+                                            }
+                                            $$ = TreeCreate(TLookup("void"), NODE_ASSGN, NULL, NULL, NULL, $1, $3, NULL);
+                                        }
+       | Field ASSGN NILL ';'           {
+                                            if($1->type == TLookup("integer") || $1->type == TLookup("string")) {
+                                                yyerror("Cannot assign NULL to string or integer variable\n", NULL);
+                                                exit(1);
+                                            }
+                                            $$ = TreeCreate(TLookup("void"), NODE_ASSGN, NULL, NULL, NULL, $1, $3, NULL);
+                                        }
        ;
 
 ExprList: ExprList ',' expr {
@@ -440,6 +518,7 @@ expr : expr PLUS expr	{
                         }
      | id		{$$ = $1;}
      | func             {$$ = $1;}
+     | Field            {$$ = $1;}
      ;
 
 func: ID '(' ExprList ')'   {

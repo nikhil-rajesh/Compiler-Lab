@@ -24,6 +24,10 @@
 #define NODE_ARRAY 22
 #define NODE_RET 24
 #define NODE_FUNC 25
+#define NODE_FIELD 26
+#define NODE_NULL 27
+#define NODE_ALLOC 28
+#define NODE_FREE 29
 
 union Constant{
     int intval;
@@ -56,4 +60,5 @@ struct ASTNode* TreeCreate(
 int codegen(struct ASTNode *t);
 void initialize();
 struct ASTNode* reverseList(struct ASTNode *t);
+struct ASTNode* insertFieldId(struct ASTNode *field, struct ASTNode *id);
 struct ASTNode* tempASTNode;

@@ -40,7 +40,15 @@ str \"(\\.|[^\\\"])*\"
 "enddecl"   {return ENDDECL;}
 "type"      {return TYPE;}
 "endtype"   {return ENDTYPE;}
-"NULL"      {return NILL;}
+"NULL"      {
+                yylval.nptr = TreeCreate(TLookup("integer"), NODE_NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+                return NILL;
+            }
+"free"      {return FREE;}
+"alloc"     {
+                yylval.nptr = TreeCreate(TLookup("integer"), NODE_ALLOC, NULL, NULL, NULL, NULL, NULL, NULL);
+                return ALLOC;
+            }
 "int"       {return INT;}
 "str"       {return STR;}
 "=="        {return EQ;}
@@ -71,7 +79,7 @@ str \"(\\.|[^\\\"])*\"
             }
 [ \t]	    {}
 \n          {lineno++;}
-[{}()\[\];,]  {return *yytext;}
+[{}()\[\];,.]  {return *yytext;}
 .	    {
                 yyerror("unknown character\n", NULL);
                 exit(1);
