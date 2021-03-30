@@ -190,7 +190,7 @@ int codegen(struct ASTNode* t) {
             status = counter;
 
             fprintf(intermediate, "MOV R0,\"Read\"\n");
-            fprintf(intermediate, "PUSH R0\n"); // function code "Write"
+            fprintf(intermediate, "PUSH R0\n"); // function code "Read"
             fprintf(intermediate, "MOV R0,-1\n");
             fprintf(intermediate, "PUSH R0\n"); //Argument 1
 
@@ -206,6 +206,61 @@ int codegen(struct ASTNode* t) {
                 fprintf(intermediate, "POP R%d\n", i);
             counter = status;
             break;
+        case NODE_FREE:
+            for (i = 0; i <= counter; i++)
+                fprintf(intermediate, "PUSH R%d\n", i);
+            status = counter;
+
+            fprintf(intermediate, "MOV R0,\"Free\"\n");
+            fprintf(intermediate, "PUSH R0\n");
+
+            r1 = getMemoryAddress(t->ptr1);
+            fprintf(intermediate, "PUSH R%d\n", r1); //Argument 1
+            freeReg();
+
+            fprintf(intermediate, "ADD SP,3\n");
+            fprintf(intermediate, "CALL 0\n");
+            fprintf(intermediate, "SUB SP,5\n");
+
+            for (i = status; i >= 0; i--)
+                fprintf(intermediate, "POP R%d\n", i);
+            counter = status;
+            break;
+        case NODE_INIT:
+            for (i = 0; i <= counter; i++)
+                fprintf(intermediate, "PUSH R%d\n", i);
+            status = counter;
+
+            fprintf(intermediate, "MOV R0,\"Heapset\"\n");
+            fprintf(intermediate, "PUSH R0\n");
+            fprintf(intermediate, "ADD SP,4\n");
+            fprintf(intermediate, "CALL 0\n");
+            fprintf(intermediate, "SUB SP,5\n");
+
+            for (i = status; i >= 0; i--)
+                fprintf(intermediate, "POP R%d\n", i);
+            counter = status;
+            break;
+        case NODE_ALLOC:
+            for (i = 0; i <= counter; i++)
+                fprintf(intermediate, "PUSH R%d\n", i);
+            status = counter;
+
+            fprintf(intermediate, "MOV R0,\"Alloc\"\n");
+            fprintf(intermediate, "PUSH R0\n");
+            fprintf(intermediate, "ADD SP,4\n");
+            fprintf(intermediate, "CALL 0\n");
+
+            r1 = status + 1;
+            fprintf(intermediate, "POP R%d\n", r1); // for return value
+            
+            fprintf(intermediate, "SUB SP,4\n");
+
+            for (i = status; i >= 0; i--)
+                fprintf(intermediate, "POP R%d\n", i);
+            counter = status;
+            r1 = getReg();
+            return r1;
         case NODE_IF:
             r1 = codegen(t->ptr1); 
             l1 = getlabel();
@@ -300,6 +355,10 @@ int codegen(struct ASTNode* t) {
                 fprintf(intermediate, "POP R%d\n", i);
             counter = status;
             r1 = getReg();
+            return r1;
+        case NODE_NULL:
+            r1 = getreg();
+            fprintf(intermediate, "MOV R%d,-1\n", r1);
             return r1;
             break;
         default:

@@ -28,6 +28,7 @@
 #define NODE_NULL 27
 #define NODE_ALLOC 28
 #define NODE_FREE 29
+#define NODE_INIT 30
 
 union Constant{
     int intval;

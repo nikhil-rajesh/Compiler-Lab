@@ -31,7 +31,7 @@
 %token START END READ WRITE PLUS MINUS MUL DIV MOD ASSGN NUM ID
 %token IF THEN ELSE ENDIF WHILE DO ENDWHILE EQ NEQ LE GE LT GT
 %token BREAK CONT DECL ENDDECL INT STR STRVAL MAIN RETURN TYPE
-%token ENDTYPE NILL FREE ALLOC
+%token ENDTYPE NILL FREE ALLOC INIT
 
 %nonassoc LT GT LE GE
 %right EQ NEQ
@@ -362,6 +362,7 @@ Stmt: InputStmt         {$$ = $1;}
                                     }
                                     $$ = TreeCreate(TLookup("void"), NODE_FREE, NULL, NULL, NULL, $3, NULL, NULL);
                                 }
+    | INIT '(' ')' ';'          {$$ = TreeCreate(TLookup("void"), NODE_INIT, NULL, NULL, NULL, NULL, NULL, NULL);}
     ;
 
 IfStmt: IF '(' expr ')' THEN Slist ELSE Slist ENDIF ';'     {

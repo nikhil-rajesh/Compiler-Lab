@@ -44,7 +44,8 @@ str \"(\\.|[^\\\"])*\"
                 yylval.nptr = TreeCreate(TLookup("integer"), NODE_NULL, NULL, NULL, NULL, NULL, NULL, NULL);
                 return NILL;
             }
-"free"      {return FREE;}
+"free"       {return FREE;}
+"initialize" {return INIT;}
 "alloc"     {
                 yylval.nptr = TreeCreate(TLookup("integer"), NODE_ALLOC, NULL, NULL, NULL, NULL, NULL, NULL);
                 return ALLOC;

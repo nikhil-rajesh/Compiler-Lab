@@ -8,6 +8,6 @@ make > /dev/null 2>&1
 ./expl-bin $1
 ./ltranslate
 cd $PROJ_DIR
-./xsm -e $CURR_DIR/machinecode.xsm -l $CURR_DIR/library.lib
+./xsm -l $CURR_DIR/library.lib -e $CURR_DIR/machinecode.xsm
 cd $wd
 make clean > /dev/null
