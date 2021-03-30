@@ -19,7 +19,7 @@ int main() {
         int b;
     enddecl
     begin
-        b = NULL;
+        list = NULL;
         return 0;
     end
 }

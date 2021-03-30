@@ -95,6 +95,12 @@ void TInstall(char *name, struct Fieldlist *fields) {
 
     temp->fields = fields;
     temp->size = counter;
+
+    if(counter >= 8) {
+        yyerror("Too many member fields", NULL);
+        exit(1);
+    }
+
     Fhead = NULL;
     Ftail = NULL;
     return;
