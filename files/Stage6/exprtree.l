@@ -40,12 +40,20 @@ str \"(\\.|[^\\\"])*\"
 "enddecl"   {return ENDDECL;}
 "type"      {return TYPE;}
 "endtype"   {return ENDTYPE;}
-"NULL"      {
-                yylval.nptr = TreeCreate(TLookup("integer"), NODE_NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-                return NILL;
-            }
-"free"       {return FREE;}
-"initialize" {return INIT;}
+"NULL"          {
+                    yylval.nptr = TreeCreate(TLookup("integer"), NODE_NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+                    return NILL;
+                }
+"=="[ ]*"NULL" 	{
+                    yylval.nptr = TreeCreate(TLookup("integer"), NODE_NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+                    return DEQNILL;
+		}
+"!="[ ]*"NULL" 	{
+                    yylval.nptr = TreeCreate(TLookup("integer"), NODE_NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+                    return NEQNILL;
+		}
+"free"          {return FREE;}
+"initialize"    {return INIT;}
 "alloc"     {
                 yylval.nptr = TreeCreate(TLookup("integer"), NODE_ALLOC, NULL, NULL, NULL, NULL, NULL, NULL);
                 return ALLOC;

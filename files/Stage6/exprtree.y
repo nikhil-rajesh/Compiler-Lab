@@ -31,7 +31,7 @@
 %token START END READ WRITE PLUS MINUS MUL DIV MOD ASSGN NUM ID
 %token IF THEN ELSE ENDIF WHILE DO ENDWHILE EQ NEQ LE GE LT GT
 %token BREAK CONT DECL ENDDECL INT STR STRVAL MAIN RETURN TYPE
-%token ENDTYPE NILL FREE ALLOC INIT
+%token ENDTYPE NILL DEQNILL NEQNILL FREE ALLOC INIT
 
 %nonassoc LT GT LE GE
 %right EQ NEQ
@@ -42,11 +42,11 @@
 %type <nptr> NUM ID START END READ WRITE PLUS MINUS MUL DIV ASSGN
 %type <nptr> IF THEN ELSE ENDIF WHILE DO ENDWHILE EQ NEQ LE GE LT
 %type <nptr> GT BREAK CONT DECL ENDDECL INT STR STRVAL MOD MAIN RETURN
-%type <nptr> TYPE ENDTYPE NILL FREE ALLOC
+%type <nptr> TYPE ENDTYPE NILL DEQNILL NEQNILL FREE ALLOC
 %type <nptr> program Slist Stmt expr id Type
 %type <nptr> BrkStmt ContStmt IfStmt WhileStmt InputStmt OutputStmt AsgStmt
 %type <nptr> MainBlock FDefBlock FDef ParamList Param ExprList func 
-%type <nptr> LDeclBlock Body LDecList LDecl IdList RetStmt
+%type <nptr> LDeclBlock Body LDecList LDecl IdList LId RetStmt
 %type <nptr> GDeclBlock GDeclList GDecl GIdList GId
 %type <nptr> TypeDefBlock TypeDefList TypeDef UserDefinedType 
 %type <nptr> FieldDeclList FieldDecl Field
@@ -304,11 +304,14 @@ LDecList: LDecList LDecl
 LDecl: FType IdList ';'
      ;
 
-IdList: IdList ',' IdList
-      | ID      {
-                    checkAvailability($1->name, 0);
-                    LInstall($1->name, FDeclarationType);
-                }
+IdList: IdList ',' LId
+      | LId
+      ;
+
+LId: ID {
+            checkAvailability($1->name, 0);
+            LInstall($1->name, FDeclarationType);
+        }
       ;
 
 Body: START Slist RetStmt END   {$$ = TreeCreate(TLookup("void"), NODE_CONNECTOR, NULL, NULL, NULL, $2, $3, NULL);}
@@ -502,6 +505,22 @@ expr : expr PLUS expr	{
      | expr EQ expr     {
                             typecheck($1->type, $3->type, 'b');
                             $$ = TreeCreate(TLookup("boolean"), NODE_EQ, NULL, NULL, NULL, $1, $3, NULL);
+                        }
+     | Field DEQNILL    {
+                            typecheck($1->type, NULL, '!');
+                            $$ = TreeCreate(TLookup("boolean"), NODE_EQ, NULL, NULL, NULL, $1, $2, NULL);
+                        }
+     | Field NEQNILL    {
+                            typecheck($1->type, NULL, '!');
+                            $$ = TreeCreate(TLookup("boolean"), NODE_NEQ, NULL, NULL, NULL, $1, $2, NULL);
+                        }
+     | ID DEQNILL       {
+                            assignType($1, 0);
+                            $$ = TreeCreate(TLookup("boolean"), NODE_EQ, NULL, NULL, NULL, $1, $2, NULL);
+                        }
+     | ID NEQNILL       {
+                            assignType($1, 0);
+                            $$ = TreeCreate(TLookup("boolean"), NODE_NEQ, NULL, NULL, NULL, $1, $2, NULL);
                         }
      | '(' expr ')'	{$$ = $2;}
      | NUM		{

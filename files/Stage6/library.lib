@@ -72,7 +72,7 @@ EQ R2, R1
 JNZ  R2, 158
 MOV R2, "Read"
 EQ R2, R1
-JNZ R2, 88
+JNZ  R2, 162
 MOV R2, "Exit"
 EQ R2, R1
 JNZ  R2, 166

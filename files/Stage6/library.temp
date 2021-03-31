@@ -81,7 +81,7 @@ EQ R2, R1
 JNZ R2,WriteEnd
 MOV R2, "Read"
 EQ R2, R1
-JNZ R2, 88
+JNZ R2,ReadEnd
 MOV R2, "Exit"
 EQ R2, R1
 JNZ R2,ExitEnd

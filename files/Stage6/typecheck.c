@@ -90,5 +90,10 @@ void typecheck(struct Typetable *t1, struct Typetable *t2, char c) {
                       exit(1);
                   }
                   break;
+        case '!': if (t1 == TLookup("string") || t1 == TLookup("integer")) {
+                      yyerror("Interger or String cannot be compared with NULL\n", NULL);
+                      exit(1);
+                  }
+                  break;
     }
 }

@@ -12,17 +12,10 @@ endtype
 int main() {
     decl
         linkedList temp, temp2;
+        int a;
     enddecl
     begin
-        initialize();
-        temp = alloc();
-        temp2 = alloc();
-        write(temp);
-        write(temp2);
-        free(temp2);
-        temp = alloc();
-        write(temp);
-        write(temp2);
+        read(a);
         return 0;
     end
 }
