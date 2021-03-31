@@ -137,6 +137,9 @@ char* findKey(struct ASTNode* head) {
         case NODE_FREE:
             strcpy(key, "free()");
             break;
+        case NODE_INIT:
+            strcpy(key, "initialize()");
+            break;
         default: 
             printf("Graphviz: No Node found");
             exit(1);

@@ -21,7 +21,7 @@
 
         // For testing
         #include "printAbsTree.c"
-        int testing = 1; // can use to test ASTree
+        int testing = 0; // can use to test ASTree
 %}
 
 %union {
@@ -147,7 +147,7 @@ Type: INT   {declarationType = TLookup("integer");}
 FType: INT  {FDeclarationType = TLookup("integer");}
      | STR  {FDeclarationType = TLookup("string");}
      | ID   {
-                declarationType = TLookup($1->name);
+                FDeclarationType = TLookup($1->name);
                 if(declarationType == NULL) {
                     yyerror("Unknown user-defined type %s\n", $1->name);
                     exit(1);

@@ -89,7 +89,7 @@ void TInstall(char *name, struct Fieldlist *fields) {
             ftemp->type = TLookup(name);
         }
 
-        ftemp->fieldIndex = counter++;
+        ftemp->fieldIndex = ++counter;
         ftemp = ftemp->next;
     }
 

@@ -1,0 +1,28 @@
+type
+    linkedList {
+        int data;
+        linkedList next;
+    }
+
+    markList {
+        str name;
+        linkedList marks;
+    }
+endtype
+int main() {
+    decl
+        linkedList temp, temp2;
+    enddecl
+    begin
+        initialize();
+        temp = alloc();
+        temp2 = alloc();
+        write(temp);
+        write(temp2);
+        free(temp2);
+        temp = alloc();
+        write(temp);
+        write(temp2);
+        return 0;
+    end
+}

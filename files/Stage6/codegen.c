@@ -41,15 +41,38 @@ int popArguments(struct ASTNode *t) {
 
 int getMemoryAddress(struct ASTNode* t) {
     int r;
-    if(t->nodetype == NODE_ID && t->Gentry != NULL) {
+    if(t->nodetype == NODE_FIELD) {
         r = getReg();
-        fprintf(intermediate, "MOV R%d, %d\n", r, t->Gentry->binding);
+        struct Fieldlist* ftemp;
+        if(t->ptr1->Gentry != NULL) {
+            fprintf(intermediate, "MOV R%d, %d\n", r, t->ptr1->Gentry->binding);
+        } else {
+            fprintf(intermediate, "MOV R%d,BP\n", r);
+            fprintf(intermediate, "ADD R%d,%d\n", r, t->ptr1->Lentry->binding);
+        }
+
+        while(t->ptr2->nodetype == NODE_FIELD) {
+            ftemp = FLookup(t->ptr2->ptr1->name, t->ptr1->type->fields); 
+            fprintf(intermediate, "MOV R%d, [R%d]\n", r, r);
+            fprintf(intermediate, "ADD R%d, %d\n", r, ftemp->fieldIndex);
+            t = t->ptr2;
+        }
+
+        ftemp = FLookup(t->ptr2->name, t->ptr1->type->fields); 
+        fprintf(intermediate, "MOV R%d, [R%d]\n", r, r);
+        fprintf(intermediate, "ADD R%d, %d\n", r, ftemp->fieldIndex);
         return r;
     } else if(t->nodetype == NODE_ID) {
-        r = getReg();
-        fprintf(intermediate, "MOV R%d,BP\n", r);
-        fprintf(intermediate, "ADD R%d,%d\n", r, t->Lentry->binding);
-        return r;
+        if(t->Gentry != NULL) {
+            r = getReg();
+            fprintf(intermediate, "MOV R%d, %d\n", r, t->Gentry->binding);
+            return r;
+        } else {
+            r = getReg();
+            fprintf(intermediate, "MOV R%d,BP\n", r);
+            fprintf(intermediate, "ADD R%d,%d\n", r, t->Lentry->binding);
+            return r;
+        }
     } else if(t->nodetype == NODE_ARRAY) {
         r = codegen(t->ptr2);
         fprintf(intermediate, "ADD R%d, %d\n", r, t->ptr1->Gentry->binding);
@@ -83,6 +106,10 @@ int codegen(struct ASTNode* t) {
             fprintf(intermediate, "MOV R%d, %s\n", r1, t->value.strval);
             return r1;
         case NODE_ID:
+            r1 = getMemoryAddress(t);
+            fprintf(intermediate, "MOV R%d, [R%d]\n", r1, r1);
+            return r1;
+        case NODE_FIELD:
             r1 = getMemoryAddress(t);
             fprintf(intermediate, "MOV R%d, [R%d]\n", r1, r1);
             return r1;
@@ -214,7 +241,7 @@ int codegen(struct ASTNode* t) {
             fprintf(intermediate, "MOV R0,\"Free\"\n");
             fprintf(intermediate, "PUSH R0\n");
 
-            r1 = getMemoryAddress(t->ptr1);
+            r1 = codegen(t->ptr1);
             fprintf(intermediate, "PUSH R%d\n", r1); //Argument 1
             freeReg();
 
@@ -357,7 +384,7 @@ int codegen(struct ASTNode* t) {
             r1 = getReg();
             return r1;
         case NODE_NULL:
-            r1 = getreg();
+            r1 = getReg();
             fprintf(intermediate, "MOV R%d,-1\n", r1);
             return r1;
             break;
