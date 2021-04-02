@@ -29,7 +29,6 @@ struct Paramstruct *Phead, *Ptail;
 struct Gsymbol *Ghead, *Gtail;
 struct Lsymbol *Lhead, *Ltail;
 
-
 void PInstall(char* name, struct Typetable *type);
 void GInstall(char *name, struct Typetable *type, int size, struct Paramstruct *paramlist);
 void LInstall(char* name, struct Typetable *type);

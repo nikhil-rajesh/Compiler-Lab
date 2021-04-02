@@ -18,9 +18,12 @@ struct Classtable {
     struct Classtable *next;            //pointer to next class table entry
 };
 
+struct Classtable *Chead, *Ctail, *CCurrent;
+int classFuncLabelCount = 0;
+
 struct Classtable* CInstall(char *name, char *parent_class_name);
 struct Classtable* CLookup(char *name);
-struct Memberfunclist* Class_Mlookup(struct Classtable* Ctype, char* Name);
-struct Fieldlist* Class_Flookup(struct Classtable* Ctype, char* Name);
+struct Memberfunclist* Class_Mlookup(struct Classtable* Ctype, char* name);
+struct Fieldlist* Class_Flookup(struct Classtable* Ctype, char* name);
 void Class_Finstall(struct Classtable *cptr, char *typename, char *name);
-void Class_Minstall(struct Classtable *cptr, char *name, struct Typetable *type, struct Paramstruct *Paramlist);
+void Class_Minstall(struct Classtable *cptr, char *name, struct Typetable *type, struct Paramstruct *paramlist);
