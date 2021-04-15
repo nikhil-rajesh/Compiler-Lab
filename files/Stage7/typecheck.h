@@ -1,6 +1,8 @@
 struct Gsymbol* Gtemp;
 struct Lsymbol* Ltemp;
 struct Paramstruct* Ptemp;
+struct Memberfunclist *Mtemp;
+struct Fieldlist *Ftemp;
 
 int checkAvailability(char *name, int global);
 void assignType(struct ASTNode* node, int func);

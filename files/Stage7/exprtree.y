@@ -1,8 +1,8 @@
 %{
 	#include <stdlib.h>
-	#include <stdio.h>
-	#include "exprtree.h"
+	#include <stdio.h> 
 
+        #include "exprtree.h"
         #include "data_structures/typetable.h"
         #include "data_structures/typetable.c"
         #include "data_structures/symboltable.h"
@@ -38,6 +38,7 @@
 %token IF THEN ELSE ENDIF WHILE DO ENDWHILE EQ NEQ LE GE LT GT
 %token BREAK CONT DECL ENDDECL INT STR STRVAL MAIN RETURN TYPE
 %token ENDTYPE NILL DEQNILL NEQNILL FREE ALLOC INIT
+%token CLASS ENDCLASS SELF NEW DELETE
 
 %nonassoc LT GT LE GE
 %right EQ NEQ
@@ -49,18 +50,20 @@
 %type <nptr> IF THEN ELSE ENDIF WHILE DO ENDWHILE EQ NEQ LE GE LT
 %type <nptr> GT BREAK CONT DECL ENDDECL INT STR STRVAL MOD MAIN RETURN
 %type <nptr> TYPE ENDTYPE NILL DEQNILL NEQNILL FREE ALLOC
-%type <nptr> program Slist Stmt expr id Type
+%type <nptr> CLASS ENDCLASS SELF NEW DELETE
+%type <nptr> program Slist Stmt expr id Type FType
 %type <nptr> BrkStmt ContStmt IfStmt WhileStmt InputStmt OutputStmt AsgStmt
 %type <nptr> MainBlock FDefBlock FDef ParamList Param ExprList func 
 %type <nptr> LDeclBlock Body LDecList LDecl IdList LId RetStmt
 %type <nptr> GDeclBlock GDeclList GDecl GIdList GId
 %type <nptr> TypeDefBlock TypeDefList TypeDef UserDefinedType 
-%type <nptr> FieldDeclList FieldDecl Field
+%type <nptr> ClassDefBlock ClassDefList ClassDef Cname ClassFieldDeclList ClassFieldDecl
+%type <nptr> ClassMethodDeclList ClassMethodDefns ClassMethodDecl
+%type <nptr> FieldDeclList FieldDecl Field FieldFunction
 
 %%
 
-program: TypeDefBlock GDeclBlock FDefBlock MainBlock {fclose(intermediate);}
-       | TypeDefBlock GDeclBlock MainBlock           {fclose(intermediate);}
+program: TypeDefBlock ClassDefBlock GDeclBlock FDefBlock MainBlock {fclose(intermediate);}
        ;
 
 TypeDefBlock: TYPE TypeDefList ENDTYPE
@@ -93,6 +96,55 @@ FieldDecl: FieldType ID ';' {
                                 FInstall($2->name, declarationType, NULL);
                             }
          ;
+
+ClassDefBlock: CLASS ClassDefList ENDCLASS
+             |
+             ;
+
+ClassDefList: ClassDefList ClassDef
+            |
+            ;
+
+ClassDef: Cname '{' DECL ClassFieldDeclList ClassMethodDeclList ENDDECL ClassMethodDefns '}' {
+                                        CCurrent = NULL;
+                                        if(defCount != declCount) {
+                                            yyerror("All functions declared in class need to be defined\n", NULL);
+                                            exit(1);
+                                        }
+                                        declCount = 0;
+                                        defCount = 0;
+                                    }
+        ;
+
+Cname: ID {CCurrent = CInstall($1->name, NULL);}
+     ;
+
+ClassFieldDeclList: ClassFieldDeclList ClassFieldDecl
+              |
+              ;
+
+ClassFieldDecl: ID ID ';'   {
+                                checkAvailability($2->name, 2);
+                                Class_Finstall(CCurrent, $1->name, $2->name);
+                            }
+          ;
+
+ClassMethodDeclList: ClassMethodDeclList ClassMethodDecl
+                   |
+                   ;
+
+ClassMethodDecl: Type ID '(' ParamList ')' ';'  {
+                                                    declCount++;
+                                                    checkAvailability($2->name, 2);
+                                                    Class_Minstall(CCurrent, $2->name, declarationType, Phead);
+                                                    Phead = NULL;
+                                                    Ptail = NULL;
+                                                }
+               ;
+
+ClassMethodDefns: ClassMethodDefns FDef
+                |
+                ;
 
 GDeclBlock: DECL GDeclList ENDDECL      {
                                             initialize();
@@ -143,8 +195,9 @@ Type: INT   {declarationType = TLookup("integer");}
     | STR   {declarationType = TLookup("string");}
     | ID    {
                 declarationType = TLookup($1->name);
-                if(declarationType == NULL) {
-                    yyerror("Unknown user-defined type %s\n", $1->name);
+                declarationCType = CLookup($1->name);
+                if(declarationType == NULL && declarationCType == NULL) {
+                    yyerror("Unknown Class/UDT %s\n", $1->name);
                     exit(1);
                 }
             }
@@ -154,7 +207,7 @@ FType: INT  {FDeclarationType = TLookup("integer");}
      | STR  {FDeclarationType = TLookup("string");}
      | ID   {
                 FDeclarationType = TLookup($1->name);
-                if(declarationType == NULL) {
+                if(FDeclarationType == NULL) {
                     yyerror("Unknown user-defined type %s\n", $1->name);
                     exit(1);
                 }
@@ -169,13 +222,13 @@ GIdList: GIdList ',' GId
 GId: ID '(' ParamList ')'   {
                                 declCount++;
                                 checkAvailability($1->name, 1);
-                                GInstall($1->name, declarationType, -1, Phead);
+                                GInstall($1->name, declarationType, NULL, -1, Phead);
                                 Phead = NULL;
                                 Ptail = NULL;
                             }
    | ID                     {
                                 checkAvailability($1->name, 1);
-                                GInstall($1->name, declarationType, 1, NULL);
+                                GInstall($1->name, declarationType, declarationCType, 1, NULL);
                             }
    | ID '[' NUM ']'         {
                                 checkAvailability($1->name, 1);
@@ -183,74 +236,94 @@ GId: ID '(' ParamList ')'   {
                                     yyerror("Invalid array size", NULL);
                                     exit(1);
                                 }
-                                GInstall($1->name, declarationType, $3->value.intval, NULL);
+                                GInstall($1->name, declarationType, NULL, $3->value.intval, NULL);
                             }
    ;
 
 FDefBlock: FDefBlock FDef
-         | FDef
+         |
          ;
 
 FDef: Type ID '(' ParamList ')' '{' LDeclBlock Body '}' {
-                                                            defCount++;
-                                                            Gtemp = GLookup($2->name);
+                                        defCount++;
+                                        if(CCurrent == NULL) {
+                                            Gtemp = GLookup($2->name);
 
-                                                            if(Gtemp == NULL) {
-                                                                yyerror("Function %s not declared", $2->name);
-                                                                exit(1);
-                                                            }
+                                            if(Gtemp == NULL) {
+                                                yyerror("Function %s not declared", $2->name);
+                                                exit(1);
+                                            }
+                                            
+                                            if(Gtemp->type != declarationType) {
+                                               yyerror("%s : Function type does not match declaration", $2->name);
+                                               exit(1);
+                                            }
 
-                                                            if(Gtemp->type != declarationType) {
-                                                               yyerror("%s : Function type does not match declaration", $2->name);
-                                                               exit(1);
-                                                            }
+                                            argList2 = Gtemp->paramlist;
+                                        } else {
+                                            Mtemp = Class_Mlookup(CCurrent, $2->name);
 
-                                                            argList1 = Phead;
-                                                            argList2 = Gtemp->paramlist;
+                                            if(Mtemp == NULL) {
+                                                yyerror("Function %s not declared in class", $2->name);
+                                                exit(1);
+                                            }
 
-                                                            while(argList1 != NULL && argList2 != NULL) {
-                                                                if(argList1->type != argList2->type) {
-                                                                    yyerror("%s : Conflict in argument types", $2->name);
-                                                                    exit(1);
-                                                                }
+                                            if(Mtemp->type != declarationType) {
+                                               yyerror("%s : Function type does not match declaration", $2->name);
+                                               exit(1);
+                                            }
 
-                                                                if(strcmp(argList1->name, argList2->name)) {
-                                                                    yyerror("%s : Conflict in argument names", $2->name);
-                                                                    exit(1);
-                                                                }
+                                            argList2 = Mtemp->paramlist;
+                                        }
 
-                                                                argList1 = argList1->next;
-                                                                argList2 = argList2->next;
-                                                            }
+                                        argList1 = Phead;
 
-                                                            if ((argList1 != NULL) || (argList2 != NULL)) {
-                                                                yyerror("Not enough arguments", NULL);
-                                                                exit(1);
-                                                            }
+                                        while(argList1 != NULL && argList2 != NULL) {
+                                            if(argList1->type != argList2->type) {
+                                                yyerror("%s : Conflict in argument types", $2->name);
+                                                exit(1);
+                                            }
 
-                                                            if(testing) {
-                                                                printLSymbolTable($2->name);
-                                                                print_dot($8, $2->name);
-                                                            } else {
-                                                                fprintf(intermediate, "F%d:\n",Gtemp->flabel);
-                                                                fprintf(intermediate, "PUSH BP\n");
-                                                                fprintf(intermediate, "MOV BP,SP\n");
+                                            if(strcmp(argList1->name, argList2->name)) {
+                                                yyerror("%s : Conflict in argument names", $2->name);
+                                                exit(1);
+                                            }
 
-                                                                Ltemp = Lhead;
-                                                                while(Ltemp != NULL) {
-                                                                    if(Ltemp->binding > 0)
-                                                                        fprintf(intermediate, "PUSH R0\n");
-                                                                    Ltemp = Ltemp->next;
-                                                                }
+                                            argList1 = argList1->next;
+                                            argList2 = argList2->next;
+                                        }
 
-                                                                codegen($8);
-                                                            }
+                                        if ((argList1 != NULL) || (argList2 != NULL)) {
+                                            yyerror("Not enough arguments", NULL);
+                                            exit(1);
+                                        }
 
-                                                            Phead = NULL;
-                                                            Ptail = NULL;
-                                                            Lhead = NULL;
-                                                            Ltail = NULL;
-                                                        }
+                                        if(testing) {
+                                            printLSymbolTable($2->name);
+                                            print_dot($8, $2->name);
+                                        } else {
+                                            if(Gtemp != NULL)
+                                                fprintf(intermediate, "F%d:\n",Gtemp->flabel);
+                                            else
+                                                fprintf(intermediate, "M%d:\n",Mtemp->flabel);
+                                            fprintf(intermediate, "PUSH BP\n");
+                                            fprintf(intermediate, "MOV BP,SP\n");
+
+                                            Ltemp = Lhead;
+                                            while(Ltemp != NULL) {
+                                                if(Ltemp->binding > 0)
+                                                    fprintf(intermediate, "PUSH R0\n");
+                                                Ltemp = Ltemp->next;
+                                            }
+
+                                            codegen($8);
+                                        }
+
+                                        Phead = NULL;
+                                        Ptail = NULL;
+                                        Lhead = NULL;
+                                        Ltail = NULL;
+                                    }
     ;
 
 ParamList: ParamList ',' Param
@@ -318,7 +391,7 @@ LId: ID {
             checkAvailability($1->name, 0);
             LInstall($1->name, FDeclarationType);
         }
-      ;
+   ;
 
 Body: START Slist RetStmt END   {$$ = TreeCreate(TLookup("void"), NODE_CONNECTOR, NULL, NULL, NULL, $2, $3, NULL);}
     | START RetStmt END         {$$ = $2;}
@@ -336,13 +409,51 @@ RetStmt: RETURN expr ';'    {
 
 Field: ID '.' ID        {
                             assignType($1, 0);
-                            assignTypeField($3, $1->type->fields);
-                            $$ = TreeCreate($3->type, NODE_FIELD, NULL, NULL, NULL, $1, $3, NULL);
+                            $$ = insertFieldId($1, $3);
                         }
      | Field '.' ID     {
                             $$ = insertFieldId($1, $3);
                         }
+     | SELF '.' ID      {
+                            if(CCurrent == NULL) {
+                                yyerror("SELF cannot be used outside a class\n", NULL);
+                                exit(1);
+                            }
+                            $1->Ctype = CCurrent;
+                            $$ = insertFieldId($1, $3);
+                        }
      ;
+
+FieldFunction: SELF '.' ID '(' ExprList ')' {
+                        if(CCurrent == NULL) {
+                            yyerror("SELF cannot be used outside a class\n", NULL);
+                            exit(1);
+                        }
+                        $1->Ctype = CCurrent;
+                        $3->nodetype = NODE_FUNC;
+                        $3->ptr1 = reverseList($5);
+                        $$ = TreeCreate(TLookup("void"), NODE_FIELDFUNC, NULL, NULL, NULL, $1, $3, NULL);
+                    }
+             | ID '.' ID '(' ExprList ')' {
+                        assignType($1, 0);
+                        if($1->Ctype == NULL) {
+                            yyerror("%s is not a class object\n", $1->name);
+                            exit(1);
+                        }
+                        $3->nodetype = NODE_FUNC;
+                        $3->ptr1 = reverseList($5);
+                        $$ = TreeCreate(TLookup("void"), NODE_FIELDFUNC, NULL, NULL, NULL, $1, $3, NULL);
+                    }
+             | Field '.' ID '(' ExprList ')' {
+                        if($1->Ctype == NULL) {
+                            yyerror("Memberfield is not a class object\n", NULL);
+                            exit(1);
+                        }
+                        $3->nodetype = NODE_FUNC;
+                        $3->ptr1 = reverseList($5);
+                        $$ = TreeCreate(TLookup("void"), NODE_FIELDFUNC, NULL, NULL, NULL, $1, $3, NULL);
+                    }
+             ;
 
 Slist: Slist Stmt       {$$ = TreeCreate(TLookup("void"), NODE_CONNECTOR, NULL, NULL, NULL, $1, $2, NULL);}
     | Stmt              {$$ = $1;}
@@ -356,6 +467,7 @@ Stmt: InputStmt         {$$ = $1;}
     | BrkStmt           {$$ = $1;}
     | ContStmt          {$$ = $1;}
     | func ';'          {$$ = $1;}
+    | FieldFunction ';' {$$ = $1;}
     | FREE '(' ID ')' ';'       {
                                     assignType($3, 0);
                                     if($3->type == TLookup("integer") || $3->type == TLookup("string")) {
@@ -372,6 +484,21 @@ Stmt: InputStmt         {$$ = $1;}
                                     $$ = TreeCreate(TLookup("void"), NODE_FREE, NULL, NULL, NULL, $3, NULL, NULL);
                                 }
     | INIT '(' ')' ';'          {$$ = TreeCreate(TLookup("void"), NODE_INIT, NULL, NULL, NULL, NULL, NULL, NULL);}
+    | DELETE '(' ID ')' ';'     {
+                                    assignType($3, 0);
+                                    if($3->Ctype == NULL) {
+                                        yyerror("Cannot DELETE a non class variable\n", NULL);
+                                        exit(1);
+                                    }
+                                    $$ = TreeCreate(TLookup("void"), NODE_DELETE, NULL, NULL, NULL, $3, NULL, NULL);
+                                }
+    | DELETE '(' Field ')' ';'  {
+                                    if($3->Ctype == NULL) {
+                                        yyerror("Cannot DELETE a non class variable\n", NULL);
+                                        exit(1);
+                                    }
+                                    $$ = TreeCreate(TLookup("void"), NODE_DELETE, NULL, NULL, NULL, $3, NULL, NULL);
+                                }
     ;
 
 IfStmt: IF '(' expr ')' THEN Slist ELSE Slist ENDIF ';'     {
@@ -434,6 +561,21 @@ AsgStmt: id ASSGN expr ';'          {
                                             assignType($1, 0);
                                             if($1->type == TLookup("integer") || $1->type == TLookup("string")) {
                                                 yyerror("Cannot ALLOC to string or integer variable\n", NULL);
+                                                exit(1);
+                                            }
+                                            $$ = TreeCreate(TLookup("void"), NODE_ASSGN, NULL, NULL, NULL, $1, $3, NULL);
+                                        }
+       | ID ASSGN NEW '(' ID ')' ';'    {
+                                            assignType($1, 0);
+                                            if($1->Ctype != CLookup($5->name)) {
+                                                yyerror("Type mismatch\n", NULL);
+                                                exit(1);
+                                            }
+                                            $$ = TreeCreate(TLookup("void"), NODE_ASSGN, NULL, NULL, NULL, $1, $3, NULL);
+                                        }
+       | Field ASSGN NEW '(' ID ')' ';' {
+                                            if($1->Ctype != CLookup($5->name)) {
+                                                yyerror("Type mismatch\n", NULL);
                                                 exit(1);
                                             }
                                             $$ = TreeCreate(TLookup("void"), NODE_ASSGN, NULL, NULL, NULL, $1, $3, NULL);
@@ -545,6 +687,7 @@ expr : expr PLUS expr	{
      | id		{$$ = $1;}
      | func             {$$ = $1;}
      | Field            {$$ = $1;}
+     | FieldFunction    {$$ = $1;}
      ;
 
 func: ID '(' ExprList ')'   {

@@ -38,24 +38,45 @@ struct ASTNode* reverseList(struct ASTNode* head) {
 }
 
 struct ASTNode* insertFieldId(struct ASTNode *field, struct ASTNode *id) {
-    struct ASTNode *last, *iterator = field;
-    struct Fieldlist *fieldList;
-    while(iterator->ptr2->ptr2 != NULL) {
-        iterator = iterator->ptr2;
+    struct ASTNode *head, *left, *right;
+
+    if(field->ptr2 == NULL) {
+        head = NULL;
+        left = field;
+        right = id;
+    } else {
+        head = field;
+        while(field->ptr2->ptr2 != NULL) {
+            head = head->ptr2;
+        }
+        left = head->ptr2;
+        right = id;
     }
-    last = iterator->ptr2;
-    fieldList = FLookup(id->name, last->type->fields);
+    
+    struct Fieldlist *fieldList;
+    if(left->Ctype != NULL) {
+        fieldList = FLookup(right->name, left->Ctype->memberfield);
+    } else {
+        fieldList = FLookup(right->name, left->type->fields);
+    }
 
     if(
             fieldList == NULL ||
-            last->type == TLookup("integer") ||
-            last->type == TLookup("string")) {
+            right->type == TLookup("integer") ||
+            right->type == TLookup("string")) {
         yyerror("Un-declared Field Variable '%s' access\n", id->name);
         exit(1);
     }
 
-    id->type = fieldList->type;
-    iterator->ptr2 = TreeCreate(TLookup("void"), NODE_FIELD, NULL, NULL, NULL, last, id, NULL);
-    field->type = id->type;
+    right->type = fieldList->type;
+    right->Ctype = fieldList->Ctype;
+
+    if(head == NULL) {
+        field = TreeCreate(TLookup("void"), NODE_FIELD, NULL, NULL, NULL, left, right, NULL);
+    } else  {
+        head->ptr2 = TreeCreate(TLookup("void"), NODE_FIELD, NULL, NULL, NULL, left, right, NULL);
+    }
+    field->type = right->type;
+    field->Ctype = right->Ctype;
     return field;
 }

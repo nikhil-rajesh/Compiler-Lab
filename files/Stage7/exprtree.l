@@ -40,6 +40,8 @@ str \"(\\.|[^\\\"])*\"
 "enddecl"   {return ENDDECL;}
 "type"      {return TYPE;}
 "endtype"   {return ENDTYPE;}
+"class"     {return CLASS;}
+"endclass"  {return ENDCLASS;}
 "NULL"          {
                     yylval.nptr = TreeCreate(TLookup("integer"), NODE_NULL, NULL, NULL, NULL, NULL, NULL, NULL);
                     return NILL;
@@ -54,6 +56,15 @@ str \"(\\.|[^\\\"])*\"
 		}
 "free"          {return FREE;}
 "initialize"    {return INIT;}
+"delete"    {return DELETE;}
+"self"      {
+                yylval.nptr = TreeCreate(NULL, NODE_SELF, NULL, NULL, NULL, NULL, NULL, NULL);
+                return SELF;
+            }
+"new"       {
+                yylval.nptr = TreeCreate(TLookup("integer"), NODE_NEW, NULL, NULL, NULL, NULL, NULL, NULL);
+                return NEW;
+            }
 "alloc"     {
                 yylval.nptr = TreeCreate(TLookup("integer"), NODE_ALLOC, NULL, NULL, NULL, NULL, NULL, NULL);
                 return ALLOC;

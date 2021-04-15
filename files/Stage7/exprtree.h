@@ -29,6 +29,10 @@
 #define NODE_ALLOC 28
 #define NODE_FREE 29
 #define NODE_INIT 30
+#define NODE_NEW 31
+#define NODE_DELETE 32
+#define NODE_SELF 33
+#define NODE_FIELDFUNC 34
 
 union Constant{
     int intval;
@@ -37,6 +41,7 @@ union Constant{
 
 struct ASTNode{
     struct Typetable *type;                         //pointer to the type table entry
+    struct Classtable *Ctype;
     int nodetype;                     //node type information,eg : NODETYPE_WHILE,NODETYPE_PLUS,NODETYPE_STMT etc
     char *name;                       //stores the variable/function name in case of variable/function nodes
     union Constant value;             //stores the value of the constant if the node corresponds to a constant

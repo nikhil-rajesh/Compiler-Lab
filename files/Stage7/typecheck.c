@@ -1,8 +1,20 @@
-int checkAvailability(char *name, int global) {
-    if(global) {
+int checkAvailability(char *name, int code) {
+    // Code 0 - Global Variable
+    // Code 1 - Local Variable
+    // Code 2 - Class Member Field
+    
+    if(code == 1) {
         Gtemp = GLookup(name);
         if(Gtemp != NULL) {
             yyerror("Re-initialization of variable/function '%s'\n", name);
+            exit(1);
+        }
+    } else if(code == 2) {
+        Mtemp = Class_Mlookup(CCurrent, name);
+        Ftemp = Class_Flookup(CCurrent, name);
+
+        if(Mtemp != NULL || Ftemp != NULL) {
+            yyerror("Re-initialization of member field/function '%s' in class\n", name);
             exit(1);
         }
     } else {
@@ -17,14 +29,14 @@ int checkAvailability(char *name, int global) {
     return 1;
 }
 
-void assignTypeField(struct ASTNode* node, struct Fieldlist *fields) {
-    struct Fieldlist *temp = FLookup(node->name, fields);
-    if(temp == NULL) {
-        yyerror("No member field named '%s'", node->name);
-        exit(1);
-    }
-    node->type = temp->type;
-}
+//void assignTypeField(struct ASTNode* node, struct Fieldlist *fields) {
+//    struct Fieldlist *temp = FLookup(node->name, fields);
+//    if(temp == NULL) {
+//        yyerror("No member field named '%s'", node->name);
+//        exit(1);
+//    }
+//    node->type = temp->type;
+//}
 
 void assignType(struct ASTNode* node, int code) {
     // Code 0 - Local or Global Variable
@@ -40,6 +52,7 @@ void assignType(struct ASTNode* node, int code) {
         if(Gtemp != NULL) {
             node->Gentry = Gtemp;
             node->type = Gtemp->type;
+            node->Ctype = Gtemp->Ctype;
 
             if(code == 1 && Gtemp->size != -1) {
                 yyerror("conflict in ID NodeType : Expected Function \n");

@@ -38,6 +38,12 @@ void FInstall(char *name, struct Typetable *type, struct Classtable *Ctype) {
 
 void TInstall(char *name, struct Fieldlist *fields) {
     struct Typetable *temp;
+    temp = TLookup(name);
+    if(temp != NULL) {
+        yyerror("Redeclaration of type: %s", name);
+        exit(1);
+    }
+
     struct Fieldlist *ftemp;
     int counter = 0;
     temp = (struct Typetable *)malloc(sizeof(struct Typetable));

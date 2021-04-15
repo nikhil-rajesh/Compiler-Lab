@@ -28,12 +28,13 @@ struct Paramstruct* PLookup(char *name) {
     return temp;
 }
 
-void GInstall(char *name, struct Typetable *type, int size, struct Paramstruct *paramlist) {
+void GInstall(char *name, struct Typetable *type, struct Classtable *Ctype, int size, struct Paramstruct *paramlist) {
     struct Gsymbol* temp;
     temp = (struct Gsymbol *)malloc(sizeof(struct Gsymbol));
     temp->name = (char*)malloc(sizeof(name));
     strcpy(temp->name, name);
     temp->type = type;
+    temp->Ctype = Ctype;
     temp->size = size;
     temp->next = NULL;
 

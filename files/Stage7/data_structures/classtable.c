@@ -26,7 +26,7 @@ struct Fieldlist* Class_Flookup(struct Classtable* Ctype, char* name) {
 }
 
 void Class_Minstall(struct Classtable *cptr, char *name, struct Typetable *type, struct Paramstruct *paramlist) {
-    struct Memberfunclist *mtemp, funcIter;
+    struct Memberfunclist *mtemp, *funcIter;
     mtemp = (struct Memberfunclist*)malloc(sizeof(struct Memberfunclist));
 
     mtemp->name = (char*)malloc(sizeof(name));
@@ -58,7 +58,7 @@ void Class_Minstall(struct Classtable *cptr, char *name, struct Typetable *type,
 }
 
 void Class_Finstall(struct Classtable *cptr, char *typename, char *name) {
-    struct Fieldlist *ftemp, fieldIter;
+    struct Fieldlist *ftemp, *fieldIter;
     ftemp = (struct Fieldlist*)malloc(sizeof(struct Fieldlist));
 
     ftemp->name = (char*)malloc(sizeof(name));
@@ -96,7 +96,14 @@ void Class_Finstall(struct Classtable *cptr, char *typename, char *name) {
 }
 
 struct Classtable* CInstall(char *name, char *parent_class_name) {
-    struct Classtable *Ctemp = (struct Classtable*)malloc(sizeof(struct Classtable));
+    struct Typetable *Ttemp = TLookup(name);
+    struct Classtable *Ctemp = CLookup(name);
+    if(Ttemp != NULL || Ctemp != NULL) {
+        yyerror("Re-declaration of class OR UDT with same name exists: %s", name);
+        exit(1);
+    }
+
+    Ctemp = (struct Classtable*)malloc(sizeof(struct Classtable));
     Ctemp->name = (char*)malloc(sizeof(name));
     strcpy(Ctemp->name, name);
     Ctemp->fieldCount = 0;

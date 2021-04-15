@@ -19,6 +19,7 @@ struct Classtable {
 };
 
 struct Classtable *Chead, *Ctail, *CCurrent;
+struct Classtable *declarationCType;
 int classFuncLabelCount = 0;
 
 struct Classtable* CInstall(char *name, char *parent_class_name);

@@ -10,6 +10,7 @@ struct Gsymbol{
     int binding;    //static binding of global variables
     int flabel;     //a label for identifying the starting address of a function's code
     struct Typetable *type;         //type of the variable:(Integer / String)
+    struct Classtable *Ctype;
     struct Paramstruct *paramlist;  //pointer to the head of the formal parameter list in the case of functions
     struct Gsymbol *next;           //points to the next Global Symbol Table entry
 };
@@ -30,7 +31,7 @@ struct Gsymbol *Ghead, *Gtail;
 struct Lsymbol *Lhead, *Ltail;
 
 void PInstall(char* name, struct Typetable *type);
-void GInstall(char *name, struct Typetable *type, int size, struct Paramstruct *paramlist);
+void GInstall(char *name, struct Typetable *type, struct Classtable *Ctype, int size, struct Paramstruct *paramlist);
 void LInstall(char* name, struct Typetable *type);
 struct Gsymbol* GLookup(char * name);
 struct Lsymbol* LLookup(char *name);
