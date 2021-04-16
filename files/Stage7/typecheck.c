@@ -47,6 +47,7 @@ void assignType(struct ASTNode* node, int code) {
     if(Ltemp != NULL && code == 0) {
         node->Lentry = Ltemp;
         node->type = Ltemp->type;
+        node->Ctype = NULL;
     } else {
         Gtemp = GLookup(node->name);
         if(Gtemp != NULL) {

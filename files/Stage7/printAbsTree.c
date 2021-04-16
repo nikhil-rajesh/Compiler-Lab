@@ -29,6 +29,7 @@ void print_dot_aux(struct ASTNode* node) {
 }
 
 void print_dot(struct ASTNode* tree, char* name) {
+    count = 0;
     char filename[200];
     sprintf(filename, "./TreeVisualizations/%s.gv", name);
     stream = fopen(filename, "w");
@@ -63,6 +64,9 @@ char* findKey(struct ASTNode* head) {
             break;
         case NODE_DIV:
             strcpy(key, "/");
+            break;
+        case NODE_MOD:
+            strcpy(key, "%");
             break;
         case NODE_ID:
             strcpy(key, head->name);
