@@ -26,5 +26,5 @@ struct Classtable* CInstall(char *name, char *parent_class_name);
 struct Classtable* CLookup(char *name);
 struct Memberfunclist* Class_Mlookup(struct Classtable* Ctype, char* name);
 struct Fieldlist* Class_Flookup(struct Classtable* Ctype, char* name);
-void Class_Finstall(struct Classtable *cptr, char *typename, char *name);
+void Class_Finstall(struct Classtable *cptr, struct Typetable *type, struct Classtable *Ctype, char *name);
 void Class_Minstall(struct Classtable *cptr, char *name, struct Typetable *type, struct Paramstruct *paramlist);

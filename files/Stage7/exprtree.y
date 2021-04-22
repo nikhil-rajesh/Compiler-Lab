@@ -4,10 +4,10 @@
 
         #include "exprtree.h"
         #include "data_structures/typetable.h"
-        #include "data_structures/typetable.c"
         #include "data_structures/symboltable.h"
-        #include "data_structures/symboltable.c"
         #include "data_structures/classtable.h"
+        #include "data_structures/typetable.c"
+        #include "data_structures/symboltable.c"
         #include "data_structures/classtable.c"
         #include "typecheck.h"
         #include "typecheck.c"
@@ -27,7 +27,7 @@
 
         // For testing
         #include "printAbsTree.c"
-        int testing = 0; // can use to test ASTree
+        int testing = 1; // can use to test ASTree
 %}
 
 %union {
@@ -51,14 +51,14 @@
 %type <nptr> GT BREAK CONT DECL ENDDECL INT STR STRVAL MOD MAIN RETURN
 %type <nptr> TYPE ENDTYPE NILL DEQNILL NEQNILL FREE ALLOC
 %type <nptr> CLASS ENDCLASS SELF NEW DELETE
-%type <nptr> program Slist Stmt expr id Type FType
+%type <nptr> program Slist Stmt expr id Type LType FType
 %type <nptr> BrkStmt ContStmt IfStmt WhileStmt InputStmt OutputStmt AsgStmt
 %type <nptr> MainBlock FDefBlock FDef ParamList Param ExprList func 
 %type <nptr> LDeclBlock Body LDecList LDecl IdList LId RetStmt
 %type <nptr> GDeclBlock GDeclList GDecl GIdList GId
 %type <nptr> TypeDefBlock TypeDefList TypeDef UserDefinedType 
 %type <nptr> ClassDefBlock ClassDefList ClassDef Cname ClassFieldDeclList ClassFieldDecl
-%type <nptr> ClassMethodDeclList ClassMethodDefns ClassMethodDecl
+%type <nptr> ClassMethodDefns 
 %type <nptr> FieldDeclList FieldDecl Field FieldFunction
 
 %%
@@ -105,7 +105,7 @@ ClassDefList: ClassDefList ClassDef
             |
             ;
 
-ClassDef: Cname '{' DECL ClassFieldDeclList ClassMethodDeclList ENDDECL ClassMethodDefns '}' {
+ClassDef: Cname '{' DECL ClassFieldDeclList ENDDECL ClassMethodDefns '}' {
                                         CCurrent = NULL;
                                         if(defCount != declCount) {
                                             yyerror("All functions declared in class need to be defined\n", NULL);
@@ -123,17 +123,11 @@ ClassFieldDeclList: ClassFieldDeclList ClassFieldDecl
               |
               ;
 
-ClassFieldDecl: ID ID ';'   {
+ClassFieldDecl: Type ID ';'   {
                                 checkAvailability($2->name, 2);
-                                Class_Finstall(CCurrent, $1->name, $2->name);
-                            }
-          ;
-
-ClassMethodDeclList: ClassMethodDeclList ClassMethodDecl
-                   |
-                   ;
-
-ClassMethodDecl: Type ID '(' ParamList ')' ';'  {
+                                Class_Finstall(CCurrent, declarationType, declarationCType, $2->name);
+                              }
+              | Type ID '(' ParamList ')' ';'  {
                                                     declCount++;
                                                     checkAvailability($2->name, 2);
                                                     Class_Minstall(CCurrent, $2->name, declarationType, Phead);
@@ -203,7 +197,18 @@ Type: INT   {declarationType = TLookup("integer");}
             }
     ;
 
-FType: INT  {FDeclarationType = TLookup("integer");}
+FType: INT  {declarationType = TLookup("integer");}
+     | STR  {declarationType = TLookup("string");}
+     | ID   {
+                declarationType = TLookup($1->name);
+                if(declarationType == NULL) {
+                    yyerror("Unknown return type %s\n", $1->name);
+                    exit(1);
+                }
+            }
+     ;
+
+LType: INT  {FDeclarationType = TLookup("integer");}
      | STR  {FDeclarationType = TLookup("string");}
      | ID   {
                 FDeclarationType = TLookup($1->name);
@@ -244,7 +249,7 @@ FDefBlock: FDefBlock FDef
          |
          ;
 
-FDef: Type ID '(' ParamList ')' '{' LDeclBlock Body '}' {
+FDef: FType ID '(' ParamList ')' '{' LDeclBlock Body '}' {
                                         defCount++;
                                         if(CCurrent == NULL) {
                                             Gtemp = GLookup($2->name);
@@ -331,7 +336,7 @@ ParamList: ParamList ',' Param
          |
          ;
 
-Param: FType ID  {
+Param: LType ID  {
                     checkAvailability($2->name, 0);
                     PInstall($2->name, FDeclarationType);
                 }
@@ -380,7 +385,7 @@ LDecList: LDecList LDecl
         | LDecl
         ;
 
-LDecl: FType IdList ';'
+LDecl: LType IdList ';'
      ;
 
 IdList: IdList ',' LId
@@ -433,6 +438,7 @@ FieldFunction: SELF '.' ID '(' ExprList ')' {
                         $3->nodetype = NODE_FUNC;
                         $3->ptr1 = reverseList($5);
                         $$ = TreeCreate(TLookup("void"), NODE_FIELDFUNC, NULL, NULL, NULL, $1, $3, NULL);
+                        assignType($$, 3);
                     }
              | ID '.' ID '(' ExprList ')' {
                         assignType($1, 0);
@@ -443,6 +449,7 @@ FieldFunction: SELF '.' ID '(' ExprList ')' {
                         $3->nodetype = NODE_FUNC;
                         $3->ptr1 = reverseList($5);
                         $$ = TreeCreate(TLookup("void"), NODE_FIELDFUNC, NULL, NULL, NULL, $1, $3, NULL);
+                        assignType($$, 3);
                     }
              | Field '.' ID '(' ExprList ')' {
                         if($1->Ctype == NULL) {
@@ -452,6 +459,7 @@ FieldFunction: SELF '.' ID '(' ExprList ')' {
                         $3->nodetype = NODE_FUNC;
                         $3->ptr1 = reverseList($5);
                         $$ = TreeCreate(TLookup("void"), NODE_FIELDFUNC, NULL, NULL, NULL, $1, $3, NULL);
+                        assignType($$, 3);
                     }
              ;
 

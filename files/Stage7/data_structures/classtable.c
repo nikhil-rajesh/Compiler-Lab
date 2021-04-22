@@ -57,22 +57,15 @@ void Class_Minstall(struct Classtable *cptr, char *name, struct Typetable *type,
     return;
 }
 
-void Class_Finstall(struct Classtable *cptr, char *typename, char *name) {
+void Class_Finstall(struct Classtable *cptr, struct Typetable *type, struct Classtable *Ctype, char *name) {
     struct Fieldlist *ftemp, *fieldIter;
     ftemp = (struct Fieldlist*)malloc(sizeof(struct Fieldlist));
 
     ftemp->name = (char*)malloc(sizeof(name));
     strcpy(ftemp->name, name);
     ftemp->next = NULL;
-
-    ftemp->type = TLookup(typename);
-    if(ftemp->type == NULL) {
-        ftemp->Ctype = CLookup(typename);
-        if(ftemp->Ctype == NULL) {
-            yyerror("Unkown type %s for memberfield\n", typename);
-            exit(1);
-        }
-    }
+    ftemp->type = type;
+    ftemp->Ctype = Ctype;
 
     cptr->fieldCount++;
     if(cptr->fieldCount == 8) {
@@ -111,11 +104,14 @@ struct Classtable* CInstall(char *name, char *parent_class_name) {
     Ctemp->memberfield = NULL;
     Ctemp->Vfuncptr = NULL;
     Ctemp->next = NULL;
-    Ctemp->parentptr = CLookup(parent_class_name);
+    Ctemp->parentptr = NULL;
 
-    if(Ctemp->parentptr == NULL) {
-        yyerror("Invalid parent class %s\n", parent_class_name);
-        exit(1);
+    if(parent_class_name != NULL) {
+        Ctemp->parentptr = CLookup(parent_class_name);
+        if(Ctemp->parentptr == NULL) {
+            yyerror("Invalid parent class %s\n", parent_class_name);
+            exit(1);
+        }
     }
 
     if(Chead != NULL) {

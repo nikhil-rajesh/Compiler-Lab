@@ -132,6 +132,18 @@ char* findKey(struct ASTNode* head) {
         case NODE_FIELD:
             strcpy(key, "field");
             break;
+        case NODE_FIELDFUNC:
+            strcpy(key, "fieldfunction");
+            break;
+        case NODE_SELF:
+            strcpy(key, "self");
+            break;
+        case NODE_NEW:
+            strcpy(key, "new");
+            break;
+        case NODE_DELETE:
+            strcpy(key, "delete");
+            break;
         case NODE_NULL:
             strcpy(key, "NULL");
             break;
@@ -145,7 +157,7 @@ char* findKey(struct ASTNode* head) {
             strcpy(key, "initialize()");
             break;
         default: 
-            printf("Graphviz: No Node found");
+            printf("Graphviz: No Node %d found", head->nodetype);
             exit(1);
     }
     return key;        

@@ -42,7 +42,21 @@ void assignType(struct ASTNode* node, int code) {
     // Code 0 - Local or Global Variable
     // Code 1 - Function
     // Code 2 - Array
+    // Code 3 - Class Function
     
+    if(code == 3) {
+        struct Memberfunclist *tempClassFunc;
+        tempClassFunc = Class_Mlookup(node->ptr1->Ctype, node->ptr2->name);
+
+        if(tempClassFunc == NULL) {
+            yyerror("Function '%s' not declared inside class!", node->ptr2->name);
+            exit(1);
+        }
+
+        node->type = tempClassFunc->type;
+        return;
+    }
+
     Ltemp = LLookup(node->name);
     if(Ltemp != NULL && code == 0) {
         node->Lentry = Ltemp;
@@ -56,7 +70,7 @@ void assignType(struct ASTNode* node, int code) {
             node->Ctype = Gtemp->Ctype;
 
             if(code == 1 && Gtemp->size != -1) {
-                yyerror("conflict in ID NodeType : Expected Function \n");
+                yyerror("conflict in ID NodeType : Expected Function \n", NULL);
                 printf("%s\n", node->name);
                 exit(1);
             }

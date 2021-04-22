@@ -122,7 +122,10 @@ void printGSymbolTable() {
     struct Gsymbol* temp = Ghead;
     printf("-----Global Variables-----\n");
     while (temp != NULL) {
-        printf("%s --- %s --- %d\n", temp->name, temp->type->name, temp->binding);
+        if(temp->type != NULL) 
+            printf("%s --- %s --- %d\n", temp->name, temp->type->name, temp->binding);
+        else 
+            printf("%s --- %s --- %d\n", temp->name, temp->Ctype->name, temp->binding);
         temp = temp->next;
     }
     printf("\n");
