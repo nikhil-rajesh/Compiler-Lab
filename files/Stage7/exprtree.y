@@ -38,7 +38,7 @@
 %token IF THEN ELSE ENDIF WHILE DO ENDWHILE EQ NEQ LE GE LT GT
 %token BREAK CONT DECL ENDDECL INT STR STRVAL MAIN RETURN TYPE
 %token ENDTYPE NILL DEQNILL NEQNILL FREE ALLOC INIT
-%token CLASS ENDCLASS SELF NEW DELETE
+%token CLASS ENDCLASS SELF NEW DELETE BREAKPOINT
 
 %nonassoc LT GT LE GE
 %right EQ NEQ
@@ -50,7 +50,7 @@
 %type <nptr> IF THEN ELSE ENDIF WHILE DO ENDWHILE EQ NEQ LE GE LT
 %type <nptr> GT BREAK CONT DECL ENDDECL INT STR STRVAL MOD MAIN RETURN
 %type <nptr> TYPE ENDTYPE NILL DEQNILL NEQNILL FREE ALLOC
-%type <nptr> CLASS ENDCLASS SELF NEW DELETE
+%type <nptr> CLASS ENDCLASS SELF NEW DELETE BREAKPOINT
 %type <nptr> program Slist Stmt expr id Type LType FType
 %type <nptr> BrkStmt ContStmt IfStmt WhileStmt InputStmt OutputStmt AsgStmt
 %type <nptr> MainBlock FDefBlock FDef ParamList Param ExprList func 
@@ -475,6 +475,7 @@ Stmt: InputStmt         {$$ = $1;}
     | ContStmt          {$$ = $1;}
     | func ';'          {$$ = $1;}
     | FieldFunction ';' {$$ = $1;}
+    | BREAKPOINT ';'    {$$ = $1;}
     | FREE '(' ID ')' ';'       {
                                     assignType($3, 0);
                                     if($3->type == TLookup("integer") || $3->type == TLookup("string")) {

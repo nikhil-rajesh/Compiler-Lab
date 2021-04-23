@@ -428,7 +428,7 @@ int codegen(struct ASTNode* t) {
             int r = getReg();
             fprintf(intermediate, "POP R%d\n", r);
             freeReg();
-            popArguments(t->ptr1); // Pop Arguments
+            popArguments(t->ptr2->ptr1); // Pop Arguments
 
             if (status == -1)
                 freeReg();
@@ -442,6 +442,9 @@ int codegen(struct ASTNode* t) {
             r1 = getReg();
             fprintf(intermediate, "MOV R%d,-1\n", r1);
             return r1;
+            break;
+        case NODE_BRKPT:
+            fprintf(intermediate, "BRKP\n", r1);
             break;
         default:
             printf("%d: This shouldn't have happened", t->nodetype);

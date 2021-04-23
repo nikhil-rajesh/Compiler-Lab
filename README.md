@@ -12,7 +12,7 @@ This was done as part of a Compiler Lab course I took up in my 6th Semester at N
 -   :heavy_check_mark: User Defined Variables and arrays
 -   :heavy_check_mark: Adding Functions
 -   :heavy_check_mark: User defined types and Dynamic Memory Allocation
--   :o: Adding Objects – Data encapsulation
+-   :heavy_check_mark: Adding Objects – Data encapsulation
 -   :o: Inheritance and Sub-type Polymorphism
 
 ## Running

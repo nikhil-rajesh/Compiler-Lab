@@ -33,6 +33,7 @@
 #define NODE_DELETE 32
 #define NODE_SELF 33
 #define NODE_FIELDFUNC 34
+#define NODE_BRKPT 35
 
 union Constant{
     int intval;
