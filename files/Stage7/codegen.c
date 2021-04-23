@@ -52,15 +52,28 @@ int getMemoryAddress(struct ASTNode* t) {
         }
 
         while(t->ptr2->nodetype == NODE_FIELD) {
-            ftemp = FLookup(t->ptr2->ptr1->name, t->ptr1->type->fields); 
+            if(t->ptr1->Ctype != NULL) {
+                ftemp = Class_Flookup(t->ptr1->Ctype, t->ptr2->ptr1->name);
+            } else {
+                ftemp = FLookup(t->ptr2->ptr1->name, t->ptr1->type->fields); 
+            }
             fprintf(intermediate, "MOV R%d, [R%d]\n", r, r);
             fprintf(intermediate, "ADD R%d, %d\n", r, ftemp->fieldIndex);
             t = t->ptr2;
         }
 
-        ftemp = FLookup(t->ptr2->name, t->ptr1->type->fields); 
+        if(t->ptr1->Ctype != NULL) {
+            ftemp = Class_Flookup(t->ptr1->Ctype, t->ptr2->name);
+        } else {
+            ftemp = FLookup(t->ptr2->name, t->ptr1->type->fields); 
+        }
         fprintf(intermediate, "MOV R%d, [R%d]\n", r, r);
         fprintf(intermediate, "ADD R%d, %d\n", r, ftemp->fieldIndex);
+        return r;
+    } else if(t->nodetype == NODE_SELF) {
+        r = getReg();
+        fprintf(intermediate, "MOV R%d,BP\n", r);
+        fprintf(intermediate, "ADD R%d,%d\n", r, t->Lentry->binding);
         return r;
     } else if(t->nodetype == NODE_ID) {
         if(t->Gentry != NULL) {
@@ -106,6 +119,10 @@ int codegen(struct ASTNode* t) {
             fprintf(intermediate, "MOV R%d, %s\n", r1, t->value.strval);
             return r1;
         case NODE_ID:
+            r1 = getMemoryAddress(t);
+            fprintf(intermediate, "MOV R%d, [R%d]\n", r1, r1);
+            return r1;
+        case NODE_SELF:
             r1 = getMemoryAddress(t);
             fprintf(intermediate, "MOV R%d, [R%d]\n", r1, r1);
             return r1;
@@ -233,6 +250,7 @@ int codegen(struct ASTNode* t) {
                 fprintf(intermediate, "POP R%d\n", i);
             counter = status;
             break;
+        case NODE_DELETE:
         case NODE_FREE:
             for (i = 0; i <= counter; i++)
                 fprintf(intermediate, "PUSH R%d\n", i);
@@ -268,6 +286,7 @@ int codegen(struct ASTNode* t) {
                 fprintf(intermediate, "POP R%d\n", i);
             counter = status;
             break;
+        case NODE_NEW:
         case NODE_ALLOC:
             for (i = 0; i <= counter; i++)
                 fprintf(intermediate, "PUSH R%d\n", i);
@@ -373,6 +392,42 @@ int codegen(struct ASTNode* t) {
             if (status == -1)
                 r2 = getReg();
 
+            popArguments(t->ptr1); // Pop Arguments
+
+            if (status == -1)
+                freeReg();
+
+            for (i = status; i >= 0; i--)
+                fprintf(intermediate, "POP R%d\n", i);
+            counter = status;
+            r1 = getReg();
+            return r1;
+        case NODE_FIELDFUNC:
+            for (i = 0; i <= counter; i++)
+                fprintf(intermediate, "PUSH R%d\n", i);
+            status = counter;
+            freeAllReg();
+
+            // Pushing Self
+            r1 = codegen(t->ptr1);
+            fprintf(intermediate, "PUSH R%d\n", r1); //Argument 1
+            freeReg();
+
+            pushArguments(t->ptr2->ptr1); //Push Arguments
+            fprintf(intermediate, "PUSH R0\n"); //Space for return value
+
+            struct Memberfunclist *mFuncPtr = Class_Mlookup(t->ptr1->Ctype, t->ptr2->name);
+            fprintf(intermediate, "CALL M%d\n", mFuncPtr->flabel);
+
+            r1 = status + 1;
+            fprintf(intermediate, "POP R%d\n", r1); // for return value
+            if (status == -1)
+                r2 = getReg();
+
+            // Popping Self
+            int r = getReg();
+            fprintf(intermediate, "POP R%d\n", r);
+            freeReg();
             popArguments(t->ptr1); // Pop Arguments
 
             if (status == -1)

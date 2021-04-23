@@ -82,7 +82,7 @@ void LInstall(char *name, struct Typetable *type) {
 
 void InstallParamsInLocal() {
     struct Paramstruct *temp = Phead;
-    int count = 0;
+    int count = 1;
 
     while(temp != NULL) {
         count++;
@@ -90,6 +90,7 @@ void InstallParamsInLocal() {
     }
 
     localBindingStart = -1*count - 2;
+    LInstall("self", TLookup("void"));
     temp = Phead;
     while(temp != NULL) {
         LInstall(temp->name, temp->type);

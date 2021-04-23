@@ -27,7 +27,7 @@
 
         // For testing
         #include "printAbsTree.c"
-        int testing = 1; // can use to test ASTree
+        int testing = 0; // can use to test ASTree
 %}
 
 %union {
@@ -66,9 +66,9 @@
 program: TypeDefBlock ClassDefBlock GDeclBlock FDefBlock MainBlock {fclose(intermediate);}
        ;
 
-TypeDefBlock: TYPE TypeDefList ENDTYPE
-            | TYPE ENDTYPE
-            |
+TypeDefBlock: TYPE TypeDefList ENDTYPE  {initialize();}
+            | TYPE ENDTYPE              {initialize();}
+            |                           {initialize();}
             ;
 
 TypeDefList: TypeDefList TypeDef
@@ -141,21 +141,18 @@ ClassMethodDefns: ClassMethodDefns FDef
                 ;
 
 GDeclBlock: DECL GDeclList ENDDECL      {
-                                            initialize();
                                             if(testing) {
                                                 printTypeTable();
                                                 printGSymbolTable();
                                             }
                                         }
           | DECL ENDDECL                {
-                                            initialize();
                                             if(testing) {
                                                 printTypeTable();
                                                 printGSymbolTable();
                                             }
                                         }
           |                             {
-                                            initialize();
                                             if(testing) {
                                                 printTypeTable();
                                                 printGSymbolTable();
@@ -425,6 +422,7 @@ Field: ID '.' ID        {
                                 exit(1);
                             }
                             $1->Ctype = CCurrent;
+                            $1->Lentry = LLookup("self");
                             $$ = insertFieldId($1, $3);
                         }
      ;
@@ -435,6 +433,7 @@ FieldFunction: SELF '.' ID '(' ExprList ')' {
                             exit(1);
                         }
                         $1->Ctype = CCurrent;
+                        $1->Lentry = LLookup("self");
                         $3->nodetype = NODE_FUNC;
                         $3->ptr1 = reverseList($5);
                         $$ = TreeCreate(TLookup("void"), NODE_FIELDFUNC, NULL, NULL, NULL, $1, $3, NULL);
