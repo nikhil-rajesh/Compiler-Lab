@@ -1,0 +1,109 @@
+PUSH BP
+MOV BP, SP
+MOV R1, BP
+MOV R2, 6
+SUB R1, R2
+MOV R1, [R1]
+MOV R2, "Alloc"
+EQ R2, R1
+JNZ R2,AllocStart
+MOV R2, "Free"
+EQ R2, R1
+JNZ R2,FreeStart
+MOV R2, "Heapset"
+EQ R2, R1
+JNZ R2,InitStart
+MOV R2, "Write"
+EQ R2, R1
+JNZ R2,WriteStart
+MOV R2, "Read"
+EQ R2, R1
+JNZ R2,ReadStart
+MOV R2, "Exit"
+EQ R2, R1
+JNZ R2,ExitStart
+JMP Return
+AllocStart:
+MOV R0, [1024]
+MOV R1, [R0]
+MOV [1024], R1
+MOV R2, BP
+MOV R3, 2
+SUB R2, R3
+MOV [R2], R0
+JMP Return
+FreeStart:
+MOV R0, BP
+MOV R1, 5
+SUB R0, R1
+MOV R1, [R0]
+MOV R2, [1024]
+MOV [R1], R2
+MOV [1024], R1
+JMP Return
+InitStart:
+MOV R1, 2040
+MOV R2, -1
+InitLoopStart:
+MOV R0, 1024
+GT R0, R1
+JNZ R0,InitLoopEnd
+MOV [R1], R2
+MOV R2, R1
+SUB R1, 8
+JMP InitLoopStart
+InitLoopEnd:
+JMP Return
+WriteStart:
+MOV R7, 5
+JMP Common
+ReadStart:
+MOV R7, 7
+JMP Common
+ExitStart:
+MOV R7, 10
+Common:
+MOV R11, BP
+MOV R12, 5
+SUB R11, R12
+MOV R12, [R11]
+ADD R11, 1
+MOV R13, [R11]
+ADD R11, 1
+MOV R14, [R11]
+PUSH R7
+PUSH R12
+PUSH R13
+PUSH R14
+PUSH R7
+MOV R2, "Write"
+EQ R2, R1
+JNZ R2,WriteEnd
+MOV R2, "Read"
+EQ R2, R1
+JNZ R2,ReadEnd
+MOV R2, "Exit"
+EQ R2, R1
+JNZ R2,ExitEnd
+JMP Return
+WriteEnd:
+INT 7
+JMP CommonEnd
+ReadEnd:
+INT 6
+JMP CommonEnd
+ExitEnd:
+INT 10
+CommonEnd:
+POP R1
+POP R2
+POP R2
+POP R2
+POP R2
+MOV R2, BP
+MOV R3, 2
+SUB R2, R3
+MOV [R2], R1
+Return:
+POP BP
+RET
