@@ -1,5 +1,6 @@
 int counter = -1, i, j, label=0;
 int whileStart = -1, whileEnd = -1;
+int nodeNewFuncPtrReg = -1;
 struct Lsymbol* Ltemp;
 extern FILE *intermediate;
 
@@ -204,6 +205,13 @@ int codegen(struct ASTNode* t) {
             r1 = getMemoryAddress(t->ptr1);
             r2 = codegen(t->ptr2);
             fprintf(intermediate, "MOV [R%d], R%d\n", r1, r2);
+
+            if(t->ptr2->nodetype == NODE_NEW) {
+                fprintf(intermediate, "ADD R%d, 1\n", r1);
+                fprintf(intermediate, "MOV [R%d], R%d\n", r1, nodeNewFuncPtrReg);
+                freeReg();
+            }
+
             freeReg();
             freeReg();
             return 0;
@@ -287,6 +295,31 @@ int codegen(struct ASTNode* t) {
             counter = status;
             break;
         case NODE_NEW:
+            for (i = 0; i <= counter; i++)
+                fprintf(intermediate, "PUSH R%d\n", i);
+            status = counter;
+
+            fprintf(intermediate, "MOV R0,\"Alloc\"\n");
+            fprintf(intermediate, "PUSH R0\n");
+            fprintf(intermediate, "ADD SP,4\n");
+            fprintf(intermediate, "CALL 0\n");
+
+            r1 = status + 1;
+            fprintf(intermediate, "POP R%d\n", r1); // for return value
+            
+            fprintf(intermediate, "SUB SP,4\n");
+
+            for (i = status; i >= 0; i--)
+                fprintf(intermediate, "POP R%d\n", i);
+            counter = status;
+            r1 = getReg();
+
+            // Virtual Function Table Pointer
+            r2 = getReg();    
+            nodeNewFuncPtrReg = r2;
+            fprintf(intermediate, "MOV R%d, %d\n", r2, 4096 + 8*(t->ptr1->Ctype->classIndex));
+
+            return r1;
         case NODE_ALLOC:
             for (i = 0; i <= counter; i++)
                 fprintf(intermediate, "PUSH R%d\n", i);
@@ -413,11 +446,20 @@ int codegen(struct ASTNode* t) {
             fprintf(intermediate, "PUSH R%d\n", r1); //Argument 1
             freeReg();
 
+            // Pushing Virtual Function table pointer
+            r1 = getMemoryAddress(t->ptr1);
+            fprintf(intermediate, "ADD R%d, 1\n", r1);
+            fprintf(intermediate, "MOV R%d, [R%d]\n", r1, r1);
+            fprintf(intermediate, "PUSH R%d\n", r1); //Argument 2
+
             pushArguments(t->ptr2->ptr1); //Push Arguments
             fprintf(intermediate, "PUSH R0\n"); //Space for return value
 
             struct Memberfunclist *mFuncPtr = Class_Mlookup(t->ptr1->Ctype, t->ptr2->name);
-            fprintf(intermediate, "CALL M%d\n", mFuncPtr->flabel);
+            fprintf(intermediate, "ADD R%d, %d\n", r1, mFuncPtr->funcPosition);
+            fprintf(intermediate, "MOV R%d, [R%d]\n", r1, r1);
+            fprintf(intermediate, "CALL R%d\n", r1);
+            freeReg();
 
             r1 = status + 1;
             fprintf(intermediate, "POP R%d\n", r1); // for return value
@@ -426,6 +468,7 @@ int codegen(struct ASTNode* t) {
 
             // Popping Self
             int r = getReg();
+            fprintf(intermediate, "POP R%d\n", r);
             fprintf(intermediate, "POP R%d\n", r);
             freeReg();
             popArguments(t->ptr2->ptr1); // Pop Arguments

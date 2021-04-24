@@ -28,3 +28,5 @@ struct Memberfunclist* Class_Mlookup(struct Classtable* Ctype, char* name);
 struct Fieldlist* Class_Flookup(struct Classtable* Ctype, char* name);
 void Class_Finstall(struct Classtable *cptr, struct Typetable *type, struct Classtable *Ctype, char *name);
 void Class_Minstall(struct Classtable *cptr, char *name, struct Typetable *type, struct Paramstruct *paramlist);
+struct Memberfunclist* copyClassMethod(struct Classtable *Ctemp);
+struct Fieldlist* copyClassFields(struct Classtable *Ctemp);

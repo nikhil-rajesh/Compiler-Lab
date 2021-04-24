@@ -38,7 +38,7 @@
 %token IF THEN ELSE ENDIF WHILE DO ENDWHILE EQ NEQ LE GE LT GT
 %token BREAK CONT DECL ENDDECL INT STR STRVAL MAIN RETURN TYPE
 %token ENDTYPE NILL DEQNILL NEQNILL FREE ALLOC INIT
-%token CLASS ENDCLASS SELF NEW DELETE BREAKPOINT
+%token CLASS ENDCLASS SELF NEW DELETE BREAKPOINT EXTENDS
 
 %nonassoc LT GT LE GE
 %right EQ NEQ
@@ -66,9 +66,9 @@
 program: TypeDefBlock ClassDefBlock GDeclBlock FDefBlock MainBlock {fclose(intermediate);}
        ;
 
-TypeDefBlock: TYPE TypeDefList ENDTYPE  {initialize();}
-            | TYPE ENDTYPE              {initialize();}
-            |                           {initialize();}
+TypeDefBlock: TYPE TypeDefList ENDTYPE
+            | TYPE ENDTYPE
+            |
             ;
 
 TypeDefList: TypeDefList TypeDef
@@ -97,8 +97,8 @@ FieldDecl: FieldType ID ';' {
                             }
          ;
 
-ClassDefBlock: CLASS ClassDefList ENDCLASS
-             |
+ClassDefBlock: CLASS ClassDefList ENDCLASS  {initialize();}
+             |                              {initialize();}
              ;
 
 ClassDefList: ClassDefList ClassDef
@@ -116,7 +116,8 @@ ClassDef: Cname '{' DECL ClassFieldDeclList ENDDECL ClassMethodDefns '}' {
                                     }
         ;
 
-Cname: ID {CCurrent = CInstall($1->name, NULL);}
+Cname: ID               {CCurrent = CInstall($1->name, NULL);}
+     | ID EXTENDS ID    {CCurrent = CInstall($1->name,$3->name);}
      ;
 
 ClassFieldDeclList: ClassFieldDeclList ClassFieldDecl
@@ -129,7 +130,6 @@ ClassFieldDecl: Type ID ';'   {
                               }
               | Type ID '(' ParamList ')' ';'  {
                                                     declCount++;
-                                                    checkAvailability($2->name, 2);
                                                     Class_Minstall(CCurrent, $2->name, declarationType, Phead);
                                                     Phead = NULL;
                                                     Ptail = NULL;
@@ -141,18 +141,21 @@ ClassMethodDefns: ClassMethodDefns FDef
                 ;
 
 GDeclBlock: DECL GDeclList ENDDECL      {
+                                            start();
                                             if(testing) {
                                                 printTypeTable();
                                                 printGSymbolTable();
                                             }
                                         }
           | DECL ENDDECL                {
+                                            start();
                                             if(testing) {
                                                 printTypeTable();
                                                 printGSymbolTable();
                                             }
                                         }
           |                             {
+                                            start();
                                             if(testing) {
                                                 printTypeTable();
                                                 printGSymbolTable();
@@ -551,11 +554,13 @@ OutputStmt: WRITE '(' expr ')' ';'  {$$ = TreeCreate(TLookup("void"), NODE_WRITE
 
 AsgStmt: id ASSGN expr ';'          {
                                         typecheck($1->type, $3->type, '=');
+                                        classTypecheck($1->Ctype, $3->Ctype);
                                         $$ = TreeCreate(TLookup("void"), NODE_ASSGN, NULL, NULL, NULL, $1, $3, NULL);
                                     }
        | ID ASSGN expr ';'          {
                                         assignType($1, 0);
                                         typecheck($1->type, $3->type, '=');
+                                        classTypecheck($1->Ctype, $3->Ctype);
                                         $$ = TreeCreate(TLookup("void"), NODE_ASSGN, NULL, NULL, NULL, $1, $3, NULL);
                                     }
        | Field ASSGN ALLOC '(' ')' ';'  {
@@ -575,17 +580,15 @@ AsgStmt: id ASSGN expr ';'          {
                                         }
        | ID ASSGN NEW '(' ID ')' ';'    {
                                             assignType($1, 0);
-                                            if($1->Ctype != CLookup($5->name)) {
-                                                yyerror("Type mismatch\n", NULL);
-                                                exit(1);
-                                            }
+                                            classTypecheck($1->Ctype, CLookup($5->name));
+                                            $5->Ctype = CLookup($5->name);
+                                            $3->ptr1 = $5;
                                             $$ = TreeCreate(TLookup("void"), NODE_ASSGN, NULL, NULL, NULL, $1, $3, NULL);
                                         }
        | Field ASSGN NEW '(' ID ')' ';' {
-                                            if($1->Ctype != CLookup($5->name)) {
-                                                yyerror("Type mismatch\n", NULL);
-                                                exit(1);
-                                            }
+                                            classTypecheck($1->Ctype, CLookup($5->name));
+                                            $5->Ctype = CLookup($5->name);
+                                            $3->ptr1 = $5;
                                             $$ = TreeCreate(TLookup("void"), NODE_ASSGN, NULL, NULL, NULL, $1, $3, NULL);
                                         }
        | Field ASSGN expr ';'           {
@@ -733,6 +736,7 @@ int main(int argc, char *argv[]) {
     TInstall("boolean", NULL);
     TInstall("void", NULL);
     TInstall("dummy", NULL); // This is for creating the fieldlist in case of udt
+    intermediate = fopen("machinecode.xsm", "w");
 
     if (argc < 2) {
         yyerror("Please provide an input filename\n", NULL);

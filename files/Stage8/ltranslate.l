@@ -4,6 +4,7 @@
     #include "ltranslate.c"
 
     int pass = 0; // 0 = First pass; 1 = Second pass
+    int temp;
     int linecount = 2048, noNewLine = 0;
     char* Lname;
     FILE *intermediate;
@@ -33,13 +34,48 @@ identifier [a-zA-Z0-9]+
                                         fprintf(intermediate, "%s", yytext);
                                 }
 "CALL "{identifier}             {
-                                    if(pass)
-                                        fprintf(intermediate, "CALL %d", LLookup(yytext + 5));
-
+                                    if(pass) {
+                                        temp = LLookup(yytext + 5);
+                                        if(temp == -1) {
+                                            fprintf(intermediate, "%s", yytext);
+                                        } else {
+                                            fprintf(intermediate, "CALL %d", LLookup(yytext + 5));
+                                        }
+                                    }
                                 }
 "JMP "{identifier}              {
                                     if(pass)
                                         fprintf(intermediate, "JMP %d", LLookup(yytext + 4));
+                                }
+"MOV R"[0-9]+[,]{identifier}    {
+                                    if(pass) {
+                                        if(yytext[6] == ',') {
+                                            temp = LLookup(yytext + 7);
+                                            if(temp == -1) {
+                                                fprintf(intermediate, "%s", yytext);
+                                            } else {
+                                                fprintf(
+                                                    intermediate,
+                                                    "MOV R%c, %d",
+                                                    yytext[5],
+                                                    LLookup(yytext + 7)
+                                                );
+                                            }
+                                        } else {
+                                            temp = LLookup(yytext + 8);
+                                            if(temp == -1) {
+                                                fprintf(intermediate, "%s", yytext);
+                                            } else {
+                                                fprintf(
+                                                    intermediate,
+                                                    "MOV R%c%c, %d",
+                                                    yytext[5],
+                                                    yytext[6],
+                                                    LLookup(yytext + 8)
+                                                );
+                                            }
+                                        }
+                                    }
                                 }
 "JNZ R"[0-9]+[,]{identifier}    {
                                     if(pass) {

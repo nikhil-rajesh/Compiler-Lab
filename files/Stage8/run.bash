@@ -10,4 +10,4 @@ make > /dev/null 2>&1
 cd $PROJ_DIR
 ./xsm -l $CURR_DIR/library.lib -e $CURR_DIR/machinecode.xsm --debug
 cd $wd
-make clean > /dev/null
+#make clean > /dev/null

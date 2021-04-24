@@ -27,6 +27,35 @@ struct Fieldlist* Class_Flookup(struct Classtable* Ctype, char* name) {
 
 void Class_Minstall(struct Classtable *cptr, char *name, struct Typetable *type, struct Paramstruct *paramlist) {
     struct Memberfunclist *mtemp, *funcIter;
+    mtemp = Class_Mlookup(cptr, name);
+    if(mtemp != NULL) {
+        if(mtemp->type != type) {
+            yyerror("Return type should be same while function overriding\n", NULL);
+            exit(1);
+        }
+
+        struct Paramstruct *argList1, *argList2;
+        argList1 = paramlist;
+        argList2 = mtemp->paramlist;
+        while(argList1 != NULL && argList2 != NULL) {
+            if(argList1->type != argList2->type) {
+                yyerror("%s : Conflict in argument types during overriding", argList1->name);
+                exit(1);
+            }
+
+            if(strcmp(argList1->name, argList2->name)) {
+                yyerror("%s : Conflict in argument names during overriding", argList1->name);
+                exit(1);
+            }
+
+            argList1 = argList1->next;
+            argList2 = argList2->next;
+        }
+
+        mtemp->flabel = classFuncLabelCount++;
+        return;
+    }
+
     mtemp = (struct Memberfunclist*)malloc(sizeof(struct Memberfunclist));
 
     mtemp->name = (char*)malloc(sizeof(name));
@@ -68,6 +97,10 @@ void Class_Finstall(struct Classtable *cptr, struct Typetable *type, struct Clas
     ftemp->Ctype = Ctype;
 
     cptr->fieldCount++;
+    if(Ctype != NULL) {
+        cptr->fieldCount++;
+    }
+
     if(cptr->fieldCount == 8) {
         yyerror("More than 8 member fields\n", NULL);
         exit(1);
@@ -81,11 +114,70 @@ void Class_Finstall(struct Classtable *cptr, struct Typetable *type, struct Clas
         while(fieldIter->next != NULL) {
             fieldIter = fieldIter->next;
         }
-        ftemp->fieldIndex = fieldIter->fieldIndex + 1;
+        if(fieldIter->Ctype != NULL) {
+            ftemp->fieldIndex = fieldIter->fieldIndex + 2;
+        } else {
+            ftemp->fieldIndex = fieldIter->fieldIndex + 1;
+        }
         fieldIter->next = ftemp;
     }
 
     return;
+}
+
+struct Memberfunclist* copyClassMethod(struct Classtable *Ctemp) {
+    struct Memberfunclist *mtemp, *mIter = Ctemp->Vfuncptr;
+    struct Memberfunclist *head = NULL, *tail = NULL;
+
+    while(mIter != NULL) {
+        mtemp = (struct Memberfunclist*)malloc(sizeof(struct Memberfunclist));
+        mtemp->name = (char*)malloc(sizeof(mIter->name));
+        strcpy(mtemp->name, mIter->name);
+        mtemp->flabel = mIter->flabel;
+        mtemp->funcPosition = mIter->funcPosition;
+        mtemp->type = mIter->type;
+        mtemp->paramlist = mIter->paramlist;
+        mtemp->next = NULL;
+
+        if(head == NULL) {
+            head = mtemp;
+            tail = mtemp;
+        } else {
+            tail->next = mtemp;
+            tail = mtemp;
+        }
+
+        mIter = mIter->next;
+    }
+
+    return head;
+}
+
+struct Fieldlist* copyClassFields(struct Classtable *Ctemp) {
+    struct Fieldlist *ftemp, *fIter = Ctemp->memberfield;
+    struct Fieldlist *head = NULL, *tail = NULL;
+
+    while(fIter != NULL) {
+        ftemp = (struct Fieldlist*)malloc(sizeof(struct Fieldlist));
+        ftemp->name = (char*)malloc(sizeof(fIter->name));
+        strcpy(ftemp->name, fIter->name);
+        ftemp->fieldIndex = fIter->fieldIndex;
+        ftemp->type = fIter->type;
+        ftemp->Ctype = fIter->Ctype;
+        ftemp->next = NULL;
+
+        if(head == NULL) {
+            head = ftemp;
+            tail = ftemp;
+        } else {
+            tail->next = ftemp;
+            tail = ftemp;
+        }
+
+        fIter = fIter->next;
+    }
+
+    return head;
 }
 
 struct Classtable* CInstall(char *name, char *parent_class_name) {
@@ -112,6 +204,11 @@ struct Classtable* CInstall(char *name, char *parent_class_name) {
             yyerror("Invalid parent class %s\n", parent_class_name);
             exit(1);
         }
+
+        Ctemp->memberfield = copyClassFields(Ctemp->parentptr);
+        Ctemp->Vfuncptr = copyClassMethod(Ctemp->parentptr);
+        Ctemp->methodCount = Ctemp->parentptr->methodCount;
+        Ctemp->fieldCount = Ctemp->parentptr->fieldCount;
     }
 
     if(Chead != NULL) {

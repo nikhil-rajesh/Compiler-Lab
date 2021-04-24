@@ -86,6 +86,20 @@ void assignType(struct ASTNode* node, int code) {
     return;
 }
 
+void classTypecheck(struct Classtable *c1, struct Classtable *c2) {
+    if(c1 == NULL) 
+        return;
+
+    while(c2 != NULL) {
+        if(c1 == c2)
+            return;
+        c2 = c2->parentptr;
+    }
+
+    yyerror("Type mismatch between class objs during assignment statement\n", NULL);
+    exit(1);
+}
+
 void typecheck(struct Typetable *t1, struct Typetable *t2, char c) {
     switch(c) {
         case 'w': if(t1 != t2) {

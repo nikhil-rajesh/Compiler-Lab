@@ -41,6 +41,7 @@ str \"(\\.|[^\\\"])*\"
 "type"      {return TYPE;}
 "endtype"   {return ENDTYPE;}
 "class"     {return CLASS;}
+"extends"   {return EXTENDS;}
 "endclass"  {return ENDCLASS;}
 "breakpoint"    {
                     yylval.nptr = TreeCreate(TLookup("integer"), NODE_BRKPT, NULL, NULL, NULL, NULL, NULL, NULL);

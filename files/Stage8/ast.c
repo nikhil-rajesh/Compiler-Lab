@@ -21,6 +21,8 @@ struct ASTNode* TreeCreate(
     temp->ptr2 = ptr2;
     temp->ptr3 = ptr3;
     temp->arglist = arglist;
+    temp->Gentry = NULL;
+    temp->Lentry = NULL;
     return temp;
 }
 

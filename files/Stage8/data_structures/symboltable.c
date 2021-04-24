@@ -35,7 +35,11 @@ void GInstall(char *name, struct Typetable *type, struct Classtable *Ctype, int 
     strcpy(temp->name, name);
     temp->type = type;
     temp->Ctype = Ctype;
-    temp->size = size;
+    if(Ctype != NULL) {
+        temp->size = 2;
+    } else {
+        temp->size = size;
+    }
     temp->next = NULL;
 
     if(paramlist != NULL)
@@ -66,8 +70,14 @@ void LInstall(char *name, struct Typetable *type) {
     temp->name = (char*)malloc(sizeof(name));
     strcpy(temp->name, name);
     temp->type = type;
+    temp->next = NULL;
+
     temp->binding = localBindingStart;
-    localBindingStart++;
+    if(strcmp(name, "self") == 0) {
+        localBindingStart+=2;
+    } else {
+        localBindingStart++;
+    }
 
     if (Lhead != NULL) {
         Ltail->next = temp;
@@ -82,7 +92,7 @@ void LInstall(char *name, struct Typetable *type) {
 
 void InstallParamsInLocal() {
     struct Paramstruct *temp = Phead;
-    int count = 1;
+    int count = 2;
 
     while(temp != NULL) {
         count++;
