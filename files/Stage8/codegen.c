@@ -210,6 +210,13 @@ int codegen(struct ASTNode* t) {
                 fprintf(intermediate, "ADD R%d, 1\n", r1);
                 fprintf(intermediate, "MOV [R%d], R%d\n", r1, nodeNewFuncPtrReg);
                 freeReg();
+            } else if(t->ptr1->Ctype != NULL) {
+                r3 = getMemoryAddress(t->ptr2);
+                fprintf(intermediate, "ADD R%d, 1\n", r3);
+                fprintf(intermediate, "ADD R%d, 1\n", r1);
+                fprintf(intermediate, "MOV R%d, [R%d]\n", r3, r3);
+                fprintf(intermediate, "MOV [R%d], R%d\n", r1, r3);
+                freeReg();
             }
 
             freeReg();

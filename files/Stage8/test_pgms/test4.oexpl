@@ -84,11 +84,13 @@ int main(){
              second=new(Student);
              temp = second.createStudent("Mathew", 35, 999, "CS");  
              read(n);                                             
+
              if (n>0) then
                  arbitrary = first;
              else
                  arbitrary = second;
              endif; 
+
              n = arbitrary.printDetails();                                                 
              return 0;
          end
